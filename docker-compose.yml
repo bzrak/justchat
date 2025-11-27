@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chat_postgres
+    environment:
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpassword
+      POSTGRES_DB: chatdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatuser -d chatdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat_network
+
+  chat_server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chat_server
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql+psycopg://chatuser:chatpassword@postgres:5432/chatdb
+
+      # Server configuration
+      HOST: 0.0.0.0
+      PORT: 8000
+
+      # Security (change these in production!)
+      SECRET_KEY: your-secret-key-change-this-in-production
+
+      # Environment
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chat_network
+
+  # Optional: pgAdmin for database management
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: chat_pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - chat_network
+  #   profiles:
+  #     - tools
+
+volumes:
+  postgres_data:
+
+networks:
+  chat_network:
+    driver: bridge
