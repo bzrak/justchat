@@ -6,10 +6,9 @@ import { parseMessage } from './services/messageParser'
 import { MessageRenderer } from './components/messages/MessageRenderer'
 import { MessageBuilder } from './services/messageBuilder'
 
-// TODO: Replace with actual room ID management
-const TEMP_ROOM_ID = crypto.randomUUID()
-
 function App() {
+  // TODO: Replace with actual room ID management
+  const TEMP_ROOM_ID = useRef(crypto.randomUUID()).current
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [isConnected, setIsConnected] = useState(false)

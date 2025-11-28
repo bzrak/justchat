@@ -1,6 +1,6 @@
 export const MessageType = {
-  CHAT_SEND: "CHAT_SEND",
-  CHAT_BROADCAST: "CHAT_BROADCAST",
+  CHAT_SEND: "chat_send",
+  CHAT_BROADCAST: "chat_broadcast",
   // Future types go here
 } as const;
 
