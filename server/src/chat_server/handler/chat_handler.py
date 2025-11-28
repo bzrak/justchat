@@ -11,5 +11,10 @@ async def handler_chat_send(websocket: WebSocket, message: BaseMessage):
     """
     msg_in = ChatSend.model_validate(message)
     msg_in.type = MessageType.CHAT_BROADCAST
-    logging.debug(f"Sending: {msg_in.model_dump_json()}")
-    await websocket.send_text(msg_in.model_dump_json())
+    logging.info(f"SERVER SEND -> {msg_in.model_dump_json()}")
+
+    try:
+        await websocket.send_text(msg_in.model_dump_json())
+    except RuntimeError as e:
+        # Connection already closed, ignore
+        logging.warning(f"Failed to send message to closed connection: {e}")

@@ -1,11 +1,9 @@
+import logging
 from fastapi import WebSocket
 
+from chat_server.connection.context import ConnectionMetadata
 from chat_server.handler import router
 from chat_server.protocol.message import BaseMessage
-
-
-class ConnectionMetadata:
-    pass
 
 
 class ConnectionManager:
@@ -14,7 +12,8 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self.active_connections: list[WebSocket] = []
+        self.active_connections: list[ConnectionMetadata] = []
+        self._count: int = 0
 
     async def connect(self, websocket: WebSocket) -> None:
         """
@@ -22,13 +21,20 @@ class ConnectionManager:
         """
 
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self._count += 1
+        conn_data = ConnectionMetadata(websocket=websocket, id=self._count)
+        self.active_connections.append(conn_data)
 
-    def disconnect(self, websocket: WebSocket) -> None:
+    async def disconnect(self, websocket: WebSocket) -> None:
         """
         Remove a WebSocket connection from active connections.
         """
-        self.active_connections.remove(websocket)
+        # PERF: Not the most efficient lookup
+        for conn in self.active_connections:
+            if conn.websocket == websocket:
+                self.active_connections.remove(conn)
+                break
+        logging.info("Connection disconnected.")
 
     async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
         """
@@ -41,13 +47,15 @@ class ConnectionManager:
         Broadcast a message to all active connections.
         """
         for conn in self.active_connections:
-            await conn.send_text(f"[BROADCAST]: {message}")
+            await conn.websocket.send_text(f"[BROADCAST]: {message}")
 
     async def handle_message(self, data: str) -> None:
         """
         Handle the message received by client appropriately
         """
+        logging.info(f"CLIENT SEND: {data}")
         msg = BaseMessage.from_json(data)
+        logging.debug(f"{msg =}")
         if msg is not None:
             await router.dispatch(self.active_connections, msg)
 
