@@ -67,15 +67,6 @@ function App() {
     }
   }, [])
 
-  // Send Channel Join when switching channels
-  useEffect(() => {
-    if (wsRef.current && isConnected) {
-      const channelJoinMessage = MessageBuilder.channelJoin(parseInt(currentChannelId), username)
-      wsRef.current.send(JSON.stringify(channelJoinMessage))
-      console.log('Sent Channel Join (channel switch):', channelJoinMessage)
-    }
-  }, [currentChannelId, username, isConnected])
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

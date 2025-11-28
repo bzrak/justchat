@@ -2,12 +2,17 @@ import { MessageType } from '../types/messages';
 import { registerParser } from '../services/messageParser';
 import { registerRenderer } from '../components/messages/MessageRenderer';
 import { ChatMessage } from '../components/messages/ChatMessage';
+import { ChannelJoinMessage } from '../components/messages/ChannelJoinMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
   // CHAT_BROADCAST
   registerParser(MessageType.CHAT_BROADCAST, (data) => data as any);
   registerRenderer(MessageType.CHAT_BROADCAST, ChatMessage);
+
+  // CHANNEL_JOIN
+  registerParser(MessageType.CHANNEL_JOIN, (data) => data as any);
+  registerRenderer(MessageType.CHANNEL_JOIN, ChannelJoinMessage);
 
   // Future types registered here
   // Example:

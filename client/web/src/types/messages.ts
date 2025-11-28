@@ -52,4 +52,4 @@ export interface ChannelJoinMessage extends BaseMessage {
 }
 
 // Union type - add more here as you implement them
-export type Message = ChatBroadcastMessage;
+export type Message = ChatBroadcastMessage | ChannelJoinMessage;
