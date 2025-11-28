@@ -23,6 +23,7 @@ async def dispatch(websockets: list[WebSocket], message: BaseMessage):
 
     if handler is None:
         # TODO: Return a message error or some exception
+        logging.debug(f"Unknown Message Type: {message.type}. Payload: {message}")
         return
 
     for websocket in websockets:
