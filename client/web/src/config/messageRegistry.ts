@@ -1,0 +1,16 @@
+import { MessageType } from '../types/messages';
+import { registerParser } from '../services/messageParser';
+import { registerRenderer } from '../components/messages/MessageRenderer';
+import { ChatMessage } from '../components/messages/ChatMessage';
+
+// All message type registrations in one place
+export function initializeMessageHandlers() {
+  // CHAT_BROADCAST
+  registerParser(MessageType.CHAT_BROADCAST, (data) => data as any);
+  registerRenderer(MessageType.CHAT_BROADCAST, ChatMessage);
+
+  // Future types registered here
+  // Example:
+  // registerParser(MessageType.ERROR, errorParser);
+  // registerRenderer(MessageType.ERROR, ErrorMessage);
+}

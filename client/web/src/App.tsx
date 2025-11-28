@@ -1,11 +1,25 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import './App.css'
+import { initializeMessageHandlers } from './config/messageRegistry'
+import type { Message } from './types/messages'
+import { parseMessage } from './services/messageParser'
+import { MessageRenderer } from './components/messages/MessageRenderer'
+import { MessageBuilder } from './services/messageBuilder'
+
+// TODO: Replace with actual room ID management
+const TEMP_ROOM_ID = crypto.randomUUID()
 
 function App() {
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<string[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Initialize message handlers on mount
+  useEffect(() => {
+    initializeMessageHandlers()
+  }, [])
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws')
@@ -17,7 +31,11 @@ function App() {
 
     ws.onmessage = (event) => {
       console.log('Message received:', event.data)
-      setMessages(prev => [...prev, event.data])
+      const parsedMessage = parseMessage(event.data)
+
+      if (parsedMessage) {
+        setMessages(prev => [...prev, parsedMessage])
+      }
     }
 
     ws.onerror = (error) => {
@@ -37,24 +55,18 @@ function App() {
     }
   }, [])
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
   function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (message.trim() && wsRef.current && isConnected) {
-      // Create message in JSON format matching the protocol
-      const messagePayload = {
-        type: 'chat_send',
-        timestamp: new Date().toISOString(),
-        correlation_id: crypto.randomUUID(),
-        payload: {
-          room_id: crypto.randomUUID(), // TODO: Replace with actual room ID
-          content: message
-        }
-      }
-
-      const jsonMessage = JSON.stringify(messagePayload)
-      wsRef.current.send(jsonMessage)
-      console.log('Sent:', jsonMessage)
+      const chatMessage = MessageBuilder.chatSend(TEMP_ROOM_ID, message)
+      wsRef.current.send(JSON.stringify(chatMessage))
+      console.log('Sent:', chatMessage)
       setMessage('')
     }
   }
@@ -77,16 +89,18 @@ function App() {
         </div>
 
         {/* Messages Display */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-4 h-64 overflow-y-auto">
+        <div className="bg-gray-50 rounded-lg p-4 mb-4 h-96 overflow-y-auto">
           {messages.length === 0 ? (
             <p className="text-gray-400 text-center">No messages yet...</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {messages.map((msg, index) => (
-                <div key={index} className="p-2 bg-gray-50 rounded">
-                  {msg}
-                </div>
+                <MessageRenderer
+                  key={msg.correlation_id || `${msg.timestamp}-${index}`}
+                  message={msg}
+                />
               ))}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
