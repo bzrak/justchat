@@ -1,4 +1,5 @@
 export const MessageType = {
+  HELLO: "hello",
   CHAT_SEND: "chat_send",
   CHAT_BROADCAST: "chat_broadcast",
   CHANNEL_JOIN: "channel_join",
@@ -13,6 +14,16 @@ export interface BaseMessage {
   timestamp: string;
   correlation_id?: string;
   payload: any;
+}
+
+// Hello (client sends this on connection)
+export interface HelloPayload {
+  username: string;
+}
+
+export interface HelloMessage extends BaseMessage {
+  type: typeof MessageType.HELLO;
+  payload: HelloPayload;
 }
 
 // Client sends this

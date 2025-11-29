@@ -35,7 +35,12 @@ function App() {
       console.log('Connected to WebSocket')
       setIsConnected(true)
 
-      // Send Channel Join message on connection
+      // Send Hello message first to establish connection
+      const helloMessage = MessageBuilder.hello(username)
+      ws.send(JSON.stringify(helloMessage))
+      console.log('Sent Hello:', helloMessage)
+
+      // Then send Channel Join message
       const channelJoinMessage = MessageBuilder.channelJoin(parseInt(currentChannelId), username)
       ws.send(JSON.stringify(channelJoinMessage))
       console.log('Sent Channel Join:', channelJoinMessage)
