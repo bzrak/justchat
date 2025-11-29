@@ -4,6 +4,7 @@ import { registerRenderer } from '../components/messages/MessageRenderer';
 import { ChatMessage } from '../components/messages/ChatMessage';
 import { ChatSendMessageComponent } from '../components/messages/ChatSendMessage';
 import { ChannelJoinMessage } from '../components/messages/ChannelJoinMessage';
+import { ChannelLeaveMessage } from '../components/messages/ChannelLeaveMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
@@ -18,6 +19,10 @@ export function initializeMessageHandlers() {
   // CHANNEL_JOIN
   registerParser(MessageType.CHANNEL_JOIN, (data) => data as any);
   registerRenderer(MessageType.CHANNEL_JOIN, ChannelJoinMessage);
+
+  // CHANNEL_LEAVE
+  registerParser(MessageType.CHANNEL_LEAVE, (data) => data as any);
+  registerRenderer(MessageType.CHANNEL_LEAVE, ChannelLeaveMessage);
 
   // Future types registered here
   // Example:

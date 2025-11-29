@@ -51,5 +51,16 @@ export interface ChannelJoinMessage extends BaseMessage {
   payload: ChannelJoinPayload;
 }
 
+// Channel Leave (client sends this)
+export interface ChannelLeavePayload {
+  username: string;
+  channel_id: number;
+}
+
+export interface ChannelLeaveMessage extends BaseMessage {
+  type: typeof MessageType.CHANNEL_LEAVE;
+  payload: ChannelLeavePayload;
+}
+
 // Union type - add more here as you implement them
-export type Message = ChatBroadcastMessage | ChannelJoinMessage | ChatSendMessage;
+export type Message = ChatBroadcastMessage | ChannelJoinMessage | ChatSendMessage | ChannelLeaveMessage;
