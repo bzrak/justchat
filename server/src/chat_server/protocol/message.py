@@ -57,6 +57,7 @@ class MessagePublic(BaseModel):
 ###################
 class ChatSendPayload(BaseModel):
     room_id: UUID4
+    sender: str
     content: str
 
 
