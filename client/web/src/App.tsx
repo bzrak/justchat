@@ -119,6 +119,7 @@ function App() {
                 <MessageRenderer
                   key={msg.correlation_id || `${msg.timestamp}-${index}`}
                   message={msg}
+                  currentUsername={username}
                 />
               ))}
               <div ref={messagesEndRef} />

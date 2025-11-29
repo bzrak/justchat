@@ -13,7 +13,7 @@ export function registerRenderer(
 }
 
 // Main message renderer
-export function MessageRenderer({ message }: { message: Message }) {
+export function MessageRenderer({ message, currentUsername }: { message: Message; currentUsername?: string }) {
   const Renderer = renderers[message.type];
 
   if (!Renderer) {
@@ -21,5 +21,5 @@ export function MessageRenderer({ message }: { message: Message }) {
     return null;
   }
 
-  return <Renderer message={message} />;
+  return <Renderer message={message} currentUsername={currentUsername} />;
 }

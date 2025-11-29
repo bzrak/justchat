@@ -18,8 +18,8 @@ export interface BaseMessage {
 // Client sends this
 export interface ChatSendPayload {
   room_id: string;
+  sender: string;
   content: string;
-  username?: string;
 }
 
 export interface ChatSendMessage extends BaseMessage {
@@ -52,4 +52,4 @@ export interface ChannelJoinMessage extends BaseMessage {
 }
 
 // Union type - add more here as you implement them
-export type Message = ChatBroadcastMessage | ChannelJoinMessage;
+export type Message = ChatBroadcastMessage | ChannelJoinMessage | ChatSendMessage;
