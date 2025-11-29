@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.settings import get_settings
 
@@ -45,6 +46,8 @@ def root():
     }
 
 
+# Fix: pydantic.errors.PydanticUserError: `ConnectionContext` is not fully defined;
+ConnectionContext.model_rebuild()
 manager = ConnectionManager()
 
 
@@ -55,7 +58,7 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             while True:
                 data = await websocket.receive_text()
-                await manager.handle_message(data)
+                await manager.handle_message(websocket, data)
 
         except WebSocketDisconnect:
             await manager.disconnect(websocket)

@@ -12,7 +12,7 @@ HANDLERS = {
 }
 
 
-async def dispatch(ctx: list[ConnectionContext], message: BaseMessage):
+async def dispatch(ctx: ConnectionContext, message: BaseMessage):
     """
     Route a Message to its appropriate Handler
     """
@@ -28,5 +28,4 @@ async def dispatch(ctx: list[ConnectionContext], message: BaseMessage):
         logging.debug(f"Unknown Message Type: {message.type}. Payload: {message}")
         return
 
-    for conns in ctx:
-        await handler(conns.websocket, message)
+    await handler(ctx, message)
