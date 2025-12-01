@@ -13,7 +13,22 @@ export function registerParser(type: MessageTypeValue, parser: MessageParser) {
 // Parse incoming message
 export function parseMessage(rawData: string): Message | null {
   try {
-    const data = JSON.parse(rawData) as BaseMessage;
+    const data = JSON.parse(rawData) as any;
+
+    // Handle error responses that might only have a "detail" field
+    if (data.detail && !data.type) {
+      console.log("Detected error response, converting to error message");
+      const errorMessage: BaseMessage = {
+        type: "error",
+        timestamp: new Date().toISOString(),
+        payload: {
+          detail: data.detail
+        }
+      };
+      data.type = errorMessage.type;
+      data.timestamp = errorMessage.timestamp;
+      data.payload = errorMessage.payload;
+    }
 
     if (!data.type || !data.timestamp) {
       console.error("Invalid message structure:", data);
