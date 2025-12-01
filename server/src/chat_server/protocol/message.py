@@ -9,6 +9,10 @@ from pydantic.types import UUID4
 from .enums import MessageType
 
 
+class ErrorMessage(BaseModel):
+    detail: str
+
+
 class BaseMessage(BaseModel):
     """
     Base Message Class containg absolute necessary information.
@@ -34,9 +38,9 @@ class BaseMessage(BaseModel):
         match data["type"]:
             case MessageType.CHAT_SEND:
                 return ChatSend.model_validate_json(json_str)
-            case MessageType.CHANNEL_JOIN:
+            case MessageType.CHANNEL_JOIN_REQUEST:
                 return ChannelJoin.model_validate_json(json_str)
-            case MessageType.CHANNEL_LEAVE:
+            case MessageType.CHANNEL_LEAVE_REQUEST:
                 return ChannelLeave.model_validate_json(json_str)
             case _:
                 return None
@@ -98,7 +102,7 @@ class ChannelJoinPayload(BaseModel):
 
 
 class ChannelJoin(BaseMessage):
-    type: Literal[MessageType.CHANNEL_JOIN] = MessageType.CHANNEL_JOIN
+    type: Literal[MessageType.CHANNEL_JOIN_REQUEST] = MessageType.CHANNEL_JOIN_REQUEST
     payload: ChannelJoinPayload
 
 
@@ -109,5 +113,5 @@ class ChannelLeavePayload(BaseModel):
 
 
 class ChannelLeave(BaseMessage):
-    type: Literal[MessageType.CHANNEL_LEAVE] = MessageType.CHANNEL_LEAVE
+    type: Literal[MessageType.CHANNEL_LEAVE_REQUEST] = MessageType.CHANNEL_LEAVE_REQUEST
     payload: ChannelLeavePayload

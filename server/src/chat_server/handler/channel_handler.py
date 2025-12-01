@@ -13,7 +13,8 @@ async def handle_channel_join(
     """
     msg_in = ChannelJoin.model_validate(message)
     logging.info(f"SERVER SENDING -> {msg_in.model_dump_json()}")
-    await manager.broadcast(msg_in)
+    # TODO: Verify if user can join the channel.
+    await manager.channel_join()
 
 
 async def handle_channel_leave(

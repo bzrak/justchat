@@ -46,8 +46,6 @@ def root():
     }
 
 
-# Fix: pydantic.errors.PydanticUserError: `ConnectionContext` is not fully defined;
-ConnectionContext.model_rebuild()
 manager = ConnectionManager()
 
 
@@ -59,7 +57,6 @@ async def websocket_endpoint(websocket: WebSocket):
             while True:
                 data = await websocket.receive_text()
                 await manager.handle_message(websocket, data)
-
         except WebSocketDisconnect:
             await manager.disconnect(websocket)
     except WebSocketDisconnect:

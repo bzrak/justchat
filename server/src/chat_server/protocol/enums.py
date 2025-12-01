@@ -12,8 +12,9 @@ class MessageType(StrEnum):
     CHAT_BROADCAST = "chat_broadcast"  # Means the message is a broadcast
 
     # Channel
-    CHANNEL_JOIN = "channel_join"  # Used when a user joins a channel
-    CHANNEL_LEAVE = "channel_leave"  # used when a user leaves a channel
+    CHANNEL_JOIN = "channel_join"
+    CHANNEL_JOIN_REQUEST = "channel_join_request"  # Used when a user joins a channel
+    CHANNEL_LEAVE_REQUEST = "channel_leave_request"  # used when a user leaves a channel
 
     # User
     USER_ONLINE = "user_online"  # State user is online

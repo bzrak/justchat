@@ -1,9 +1,5 @@
-import logging
-
 from fastapi import WebSocket
-from pydantic import BaseModel, ValidationError
-
-from chat_server.protocol.message import Hello
+from pydantic import BaseModel
 
 
 class ConnectionContext(BaseModel):
@@ -12,17 +8,5 @@ class ConnectionContext(BaseModel):
 
     websocket: WebSocket
     id: int
-    username: str | None = None
+    username: str
     channel_id: int | None = None
-
-    async def establish_connection(self) -> bool:
-        helo = await self.websocket.receive_text()
-        try:
-            data = Hello.model_validate_json(helo)
-            self.username = data.payload.username
-            logging.info(f"Hello received from user: {self.username}")
-            return True
-        except ValidationError:
-            logging.warning(f"Expected HELLO message. Got: {helo}")
-            return False
-
