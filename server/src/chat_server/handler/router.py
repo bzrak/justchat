@@ -1,6 +1,7 @@
 import logging
 
 from chat_server.connection.context import ConnectionContext
+from chat_server.connection.manager import ConnectionManager
 from chat_server.handler import channel_handler, chat_handler
 from chat_server.protocol.message import BaseMessage
 from chat_server.protocol.enums import MessageType
@@ -12,7 +13,9 @@ HANDLERS = {
 }
 
 
-async def dispatch(ctx: ConnectionContext, message: BaseMessage):
+async def dispatch(
+    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+):
     """
     Route a Message to its appropriate Handler
     """
@@ -28,4 +31,4 @@ async def dispatch(ctx: ConnectionContext, message: BaseMessage):
         logging.debug(f"Unknown Message Type: {message.type}. Payload: {message}")
         return
 
-    await handler(ctx, message)
+    await handler(ctx, message, manager)

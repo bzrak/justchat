@@ -3,7 +3,6 @@ from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 
 from chat_server.connection.context import ConnectionContext
-from chat_server.handler import router
 from chat_server.protocol.message import BaseMessage
 
 
@@ -13,7 +12,8 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self.active_connections: list[ConnectionContext] = []
+        self.active_connections: dict[WebSocket, ConnectionContext] = {}
+        self.connections_by_id: dict[int, ConnectionContext] = {}
         self._count: int = 0
 
     async def connect(self, websocket: WebSocket) -> None:
@@ -25,10 +25,15 @@ class ConnectionManager:
 
         await websocket.accept()
         self._count += 1
-        conn_data = ConnectionContext(websocket=websocket, id=self._count, manager=self)
+
+        conn_data = ConnectionContext(websocket=websocket, id=self._count)
+
         if await conn_data.establish_connection():
             logging.info(f"Created ConnectionContext: {conn_data}")
-            self.active_connections.append(conn_data)
+            self.active_connections[websocket] = conn_data
+            self.connections_by_id[conn_data.id] = conn_data
+
+            # TODO: Announce User Join
         else:
             await websocket.close(reason="Invalid HELLO")
             raise WebSocketDisconnect
@@ -37,36 +42,48 @@ class ConnectionManager:
         """
         Get the ConnectionContext for a given WebSocket.
         """
-        # PERF: Not the most efficient lookup
-        for conn in self.active_connections:
-            if conn.websocket == websocket:
-                return conn
-        return None
+        return self.active_connections.get(websocket)
+
+    def get_connection_by_id(self, conn_id: int) -> "ConnectionContext | None":
+        """
+        Get the ConnectionContext for a given ID.
+        """
+        return self.connections_by_id.get(conn_id)
 
     async def disconnect(self, websocket: WebSocket) -> None:
         """
         Remove a WebSocket connection from active connections.
         """
-        # PERF: Not the most efficient lookup
-        for conn in self.active_connections:
-            if conn.websocket == websocket:
-                self.active_connections.remove(conn)
-                break
-        logging.info("Connection disconnected.")
+        if websocket in self.active_connections:
+            conn = self.active_connections.pop(websocket)
+            self.connections_by_id.pop(conn.id, None)
+
+            logging.info(f"<{conn.username}> has disconnected.")
+
+            # TODO: Announce User Leave
 
     async def handle_message(self, websocket: WebSocket, data: str) -> None:
         """
         Handle the message received by client appropriately
         """
+        from chat_server.handler import router
+
         logging.info(f"CLIENT SEND: {data}")
         msg = BaseMessage.from_json(data)
         if msg is not None:
             ctx = self.get_connection(websocket)
             if ctx is not None:
-                await router.dispatch(ctx, msg)
+                await router.dispatch(ctx, msg, self)
             else:
                 logging.warning("Received message from unknown connection")
 
-    async def send_text_all(self, message: str) -> None:
+    async def broadcast(self, message: BaseMessage) -> None:
+        msg_str = message.model_dump_json()
+
         for conn in self.active_connections:
-            await conn.websocket.send_text(message)
+            try:
+                await conn.send_text(msg_str)
+            except Exception as e:
+                logging.error(
+                    f"Error sending message to {self.active_connections.get(conn).username}: {e}"
+                )
