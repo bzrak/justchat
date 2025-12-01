@@ -40,8 +40,6 @@ class BaseMessage(BaseModel):
                 return ChatSend.model_validate_json(json_str)
             case MessageType.CHANNEL_JOIN_REQUEST:
                 return ChannelJoin.model_validate_json(json_str)
-            case MessageType.CHANNEL_LEAVE_REQUEST:
-                return ChannelLeave.model_validate_json(json_str)
             case _:
                 return None
 
@@ -113,5 +111,5 @@ class ChannelLeavePayload(BaseModel):
 
 
 class ChannelLeave(BaseMessage):
-    type: Literal[MessageType.CHANNEL_LEAVE_REQUEST] = MessageType.CHANNEL_LEAVE_REQUEST
+    type: Literal[MessageType.CHANNEL_LEAVE] = MessageType.CHANNEL_LEAVE
     payload: ChannelLeavePayload

@@ -63,7 +63,7 @@ export interface ChannelJoinRequestMessage extends BaseMessage {
   payload: ChannelJoinRequestPayload;
 }
 
-// Channel Leave (client sends this)
+// Channel Leave (server sends this when user disconnects)
 export interface ChannelLeavePayload {
   username: string;
   channel_id: number;

@@ -1,11 +1,21 @@
+from datetime import datetime
 import logging
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from pydantic import ValidationError
+from sqlalchemy import join
 
 from chat_server.connection.context import ConnectionContext
 from chat_server.protocol.enums import MessageType
-from chat_server.protocol.message import BaseMessage, Hello, ErrorMessage
+from chat_server.protocol.message import (
+    BaseMessage,
+    ChannelJoin,
+    ChannelJoinPayload,
+    ChannelLeave,
+    ChannelLeavePayload,
+    Hello,
+    ErrorMessage,
+)
 
 SERVER_ONLY_MESSAGES = {
     MessageType.CHANNEL_JOIN,
@@ -44,8 +54,6 @@ class ConnectionManager:
             self.active_connections[websocket] = conn_data
             self.connections_by_id[conn_data.id] = conn_data
 
-            # TODO: Announce User Join
-
         except ValidationError:
             logging.warning(f"Expected HELLO message. Got: {helo}")
             await websocket.close(reason="Invalid HELLO")
@@ -74,6 +82,7 @@ class ConnectionManager:
             logging.info(f"<{conn.username}> has disconnected.")
 
             # TODO: Announce User Leave
+            await self.send_channel_leave(conn)
 
     async def send_error(self, websocket: WebSocket, msg: str) -> None:
         err = ErrorMessage(detail=msg)
@@ -116,5 +125,14 @@ class ConnectionManager:
                     f"Error sending message to {self.active_connections.get(conn).username}: {e}"
                 )
 
-    async def channel_join(self) -> None:
-        pass
+    async def send_channel_join(self, ctx: ConnectionContext) -> None:
+        payload = ChannelJoinPayload(username=ctx.username, channel_id=0)
+        join_msg = ChannelJoin(timestamp=datetime.now(), payload=payload)
+
+        await self.broadcast(join_msg)
+
+    async def send_channel_leave(self, ctx: ConnectionContext) -> None:
+        payload = ChannelLeavePayload(username=ctx.username, channel_id=0)
+        leave_msg = ChannelLeave(timestamp=datetime.now(), payload=payload)
+
+        await self.broadcast(leave_msg)

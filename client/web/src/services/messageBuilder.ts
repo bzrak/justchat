@@ -1,5 +1,5 @@
 import { MessageType } from '../types/messages';
-import type { HelloMessage, ChatSendMessage, ChannelJoinRequestMessage, ChannelLeaveMessage } from '../types/messages';
+import type { HelloMessage, ChatSendMessage, ChannelJoinRequestMessage } from '../types/messages';
 
 export class MessageBuilder {
   static hello(username: string): HelloMessage {
@@ -38,17 +38,6 @@ export class MessageBuilder {
     };
   }
 
-  static channelLeave(channelId: number, username: string): ChannelLeaveMessage {
-    return {
-      type: MessageType.CHANNEL_LEAVE,
-      timestamp: new Date().toISOString(),
-      correlation_id: crypto.randomUUID(),
-      payload: {
-        channel_id: channelId,
-        username: username,
-      },
-    };
-  }
-
+  // Note: channelLeave is not needed - server automatically handles disconnections
   // Future: Add more builder methods here
 }
