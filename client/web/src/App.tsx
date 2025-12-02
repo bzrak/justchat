@@ -10,7 +10,7 @@ import { useWebSocket } from './contexts/WebSocketContext'
 
 function App() {
   const { username, displayName, isAuthenticated, login, logout } = useUser()
-  const { isConnected, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
+  const { isConnected, isReady, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
   // TODO: Replace with actual room ID management
   const TEMP_ROOM_ID = useRef(crypto.randomUUID()).current
   const [message, setMessage] = useState('')
@@ -21,11 +21,25 @@ function App() {
   ])
   const [currentChannelId, setCurrentChannelId] = useState('1')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const hasJoinedChannel = useRef(false)
 
   // Initialize message handlers on mount
   useEffect(() => {
     initializeMessageHandlers()
   }, [])
+
+  // Send channel join when WebSocket is ready
+  useEffect(() => {
+    if (isReady && !hasJoinedChannel.current) {
+      const channelJoinMessage = MessageBuilder.channelJoin(parseInt(currentChannelId), username)
+      wsSendMessage(channelJoinMessage)
+      console.log('Sent Channel Join:', channelJoinMessage)
+      hasJoinedChannel.current = true
+    } else if (!isReady) {
+      // Reset flag when connection is lost
+      hasJoinedChannel.current = false
+    }
+  }, [isReady, currentChannelId, username, wsSendMessage])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

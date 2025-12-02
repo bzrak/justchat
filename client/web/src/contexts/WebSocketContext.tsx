@@ -11,6 +11,7 @@ interface WebSocketContextType {
   reconnect: () => void
   disconnect: () => void
   clearMessages: () => void
+  isReady: boolean // True after HELLO is sent and connection is established
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined)
@@ -25,6 +26,7 @@ interface WebSocketProviderProps {
 
 export function WebSocketProvider({ children, username, enabled = true }: WebSocketProviderProps) {
   const [isConnected, setIsConnected] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
@@ -56,6 +58,9 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
       const helloMessage = MessageBuilder.hello(username, token || undefined)
       ws.send(JSON.stringify(helloMessage))
       console.log('Sent Hello:', helloMessage)
+
+      // Mark as ready for application to send additional messages
+      setIsReady(true)
     }
 
     ws.onmessage = (event) => {
@@ -74,6 +79,7 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
     ws.onclose = (event) => {
       console.log('Disconnected from WebSocket', event.code, event.reason)
       setIsConnected(false)
+      setIsReady(false)
       wsRef.current = null
 
       // Auto-reconnect unless intentional disconnect
@@ -94,10 +100,16 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
       clearTimeout(reconnectTimeoutRef.current)
     }
     if (wsRef.current) {
+      // Remove event listeners before closing
+      wsRef.current.onopen = null
+      wsRef.current.onmessage = null
+      wsRef.current.onerror = null
+      wsRef.current.onclose = null
       wsRef.current.close()
       wsRef.current = null
     }
     setIsConnected(false)
+    setIsReady(false)
   }, [])
 
   const reconnect = useCallback(() => {
@@ -122,7 +134,7 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
     setMessages([])
   }, [])
 
-  // Connect on mount and when enabled/username changes
+  // Connect on mount only - do NOT reconnect on username change
   useEffect(() => {
     isIntentionalDisconnect.current = false
     connect()
@@ -130,10 +142,12 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
     return () => {
       disconnect()
     }
-  }, [enabled, username])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty deps - only connect on mount
 
   const value: WebSocketContextType = {
     isConnected,
+    isReady,
     messages,
     sendMessage,
     reconnect,
