@@ -42,4 +42,4 @@ async def get_user_by_id(session: AsyncSession, id: int):
     """
     Retrieve an User from the database using an ID. Returns None if not found.
     """
-    return session.get(UserTable, id)
+    return await session.get(UserTable, id)
