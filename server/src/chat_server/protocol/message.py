@@ -6,8 +6,6 @@ from typing import Any, Literal
 from pydantic import BaseModel
 from pydantic.types import UUID4
 
-from chat_server.api.models import Token
-
 from .enums import MessageType
 
 
@@ -57,7 +55,7 @@ class BaseMessage(BaseModel):
 class HelloPayload(BaseModel):
     model_config = {"extra": "forbid"}
     username: str
-    token: Token | None = None
+    token: str | None = None
 
 
 class Hello(BaseMessage):

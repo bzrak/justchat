@@ -24,6 +24,6 @@ def generate_access_token(subject: str | Any, expires_delta: timedelta):
     Utility to generate new JWT Tokens
     """
     expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"sub": subject, "exp": expire}
+    to_encode = {"sub": str(subject), "exp": expire}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, ALGORITHM)
     return encoded_jwt

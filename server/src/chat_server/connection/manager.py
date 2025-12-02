@@ -49,34 +49,35 @@ class ConnectionManager:
 
         try:
             data = Hello.model_validate_json(helo)
-            token = data.payload.token
-            if not token:
-                logging.debug(f"No Token in Payload: {data.payload =}")
-            if token:
-                try:
-                    id = jwt.decode(
-                        token.access_token,
-                        get_settings().SECRET_KEY,
-                        algorithms=[ALGORITHM],
-                    )
-                    logging.debug(f"Token in Payload: {id =}")
-                except Exception as e:
-                    logging.warning(f"Invalid authentication: {e}")
-                    await websocket.close(reason="Authentication failed")
-                    raise WebSocketDisconnect
-
-            conn_data = ConnectionContext(
-                websocket=websocket, id=self._count, username=data.payload.username
-            )
-
-            logging.info(f"Created ConnectionContext: {conn_data}")
-            self.active_connections[websocket] = conn_data
-            self.connections_by_id[conn_data.id] = conn_data
-
         except ValidationError:
             logging.warning(f"Expected HELLO message. Got: {helo}")
             await websocket.close(reason="Invalid HELLO")
             raise WebSocketDisconnect
+
+        access_token = data.payload.token
+        if not access_token:
+            logging.debug(f"No Access Token in Payload: {access_token =}")
+        if access_token:
+            logging.debug(f"Access Token in Payload: {access_token =}")
+            try:
+                token = jwt.decode(
+                    access_token,
+                    get_settings().SECRET_KEY,
+                    algorithms=[ALGORITHM],
+                )
+                logging.debug(f"Token Decoded: {token =}")
+            except Exception as e:
+                logging.warning(f"Invalid authentication: {e}")
+                await websocket.close(reason="Authentication failed")
+                raise WebSocketDisconnect
+
+        conn_data = ConnectionContext(
+            websocket=websocket, id=self._count, username=data.payload.username
+        )
+
+        logging.info(f"Created ConnectionContext: {conn_data}")
+        self.active_connections[websocket] = conn_data
+        self.connections_by_id[conn_data.id] = conn_data
 
     def get_connection(self, websocket: WebSocket) -> "ConnectionContext | None":
         """
