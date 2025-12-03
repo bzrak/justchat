@@ -31,7 +31,7 @@ class ConnectionManager:
         self.connections_by_user_id: dict[int, ConnectionContext] = {}
         self.subsmanager = SubscriptionManager()
 
-        self._count: int = 0
+        # Map a Channel ID to its own Channel for fast lookups
         self._channels: dict[int, Channel] = {}
 
     async def connect(self, websocket: WebSocket) -> None:
@@ -42,7 +42,6 @@ class ConnectionManager:
         """
 
         await websocket.accept()
-        self._count += 1
 
         helo = await websocket.receive_text()
 
@@ -124,7 +123,7 @@ class ConnectionManager:
             conn = self.active_connections.pop(websocket)
             # self.connections_by_id.pop(conn.id, None)
 
-            logging.info(f"<{conn.username}> has disconnected.")
+            logging.info(f"<{conn.user.username}> has disconnected.")
 
             # TODO: Announce User Leave
             await self.send_channel_leave(conn)
@@ -180,8 +179,10 @@ class ConnectionManager:
             else:
                 logging.error(f"Couldn't send message to UserID: {user_id}")
 
-    async def send_channel_join(self, ctx: ConnectionContext) -> None:
-        payload = server.ChannelJoinPayload(username=ctx.user.username, channel_id=0)
+    async def send_channel_join(self, ctx: ConnectionContext, channel: Channel) -> None:
+        payload = server.ChannelJoinPayload(
+            username=ctx.user.username, channel_id=channel.id
+        )
         join_msg = server.ChannelJoin(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(join_msg)

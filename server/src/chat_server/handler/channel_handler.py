@@ -22,8 +22,9 @@ async def handle_channel_join(
     manager.add_channel(channel)
     logging.info(f"Created {repr((channel))}")
     try:
+        logging.info(f"Adding {repr(ctx.user)} to {repr(channel)}")
         manager.subsmanager.add_user_to_channel(ctx.user, channel)
-        await manager.send_channel_join(ctx)
+        await manager.send_channel_join(ctx, channel)
     except Exception as e:
         logging.info(f"Error adding {repr(ctx.user)} to {repr(channel)}: {e}")
         await manager.send_error(ctx.websocket, "Error trying to join the channel.")
