@@ -26,6 +26,7 @@ async def handler_chat_send(
             ),
         )
         logging.info(f"Server sending <{msg.model_dump_json()}> to {repr(ctx.user)}")
+        # FIX: It's possible to send messages while not being in the channel
         # TODO: Check authorization: if user can send message to that channel
         # or if actually is in the channel
         await manager.send_msg_to_channel(msg, msg_in.payload.channel_id)

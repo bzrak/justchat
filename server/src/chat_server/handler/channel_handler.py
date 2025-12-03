@@ -37,6 +37,11 @@ async def handle_channel_join(
         # Maybe the craft of the channel join message happen here
         # and make use of send_msg_to_channel()
         await manager.send_channel_join(ctx, channel)
+    except ValueError:
+        logging.info(
+            f"Error adding {repr(ctx.user)} to {repr(channel)} because of Guest Account"
+        )
+        await manager.send_error(ctx.websocket, "Guest users can NOT join a Channel.")
     except Exception as e:
         logging.info(f"Error adding {repr(ctx.user)} to {repr(channel)}: {e}")
         await manager.send_error(ctx.websocket, "Error trying to join the channel.")
