@@ -120,13 +120,12 @@ class ConnectionManager:
         Remove a WebSocket connection from active connections.
         """
         if websocket in self.active_connections:
-            conn = self.active_connections.pop(websocket)
+            ctx = self.active_connections.pop(websocket)
             # self.connections_by_id.pop(conn.id, None)
 
-            logging.info(f"<{conn.user.username}> has disconnected.")
+            logging.info(f"<{ctx.user.username}> has disconnected.")
 
-            # TODO: Announce User Leave
-            await self.send_channel_leave(conn)
+            await self.send_channel_leave(ctx)
 
     async def send_error(self, websocket: WebSocket, msg: str) -> None:
         err = ErrorMessage(detail=msg)
@@ -171,7 +170,9 @@ class ConnectionManager:
 
     async def send_msg_to_channel(self, message: BaseMessage, channel_id: int) -> None:
         channel = self.get_channel(channel_id)
+        # Retrieve all users that is in the channel
         users_id_in_channel = self.subsmanager.get_users_in_channel(channel)
+
         for user_id in users_id_in_channel:
             conn = self.get_connection_by_user_id(user_id)
             if conn:
@@ -185,13 +186,22 @@ class ConnectionManager:
         )
         join_msg = server.ChannelJoin(timestamp=datetime.now(), payload=payload)
 
-        await self.broadcast(join_msg)
+        await self.send_msg_to_channel(join_msg, channel.id)
 
     async def send_channel_leave(self, ctx: ConnectionContext) -> None:
-        payload = server.ChannelLeavePayload(username=ctx.user.username, channel_id=0)
-        leave_msg = server.ChannelLeave(timestamp=datetime.now(), payload=payload)
+        timestamp = datetime.now()
 
-        await self.broadcast(leave_msg)
+        logging.info(
+            f"{repr(ctx.user)} has left the channels: {self.subsmanager.get_channels_id_from_user(ctx.user)}"
+        )
+        for channel_id in self.subsmanager.get_channels_id_from_user(ctx.user):
+            self.subsmanager.remove_user_from_channel(ctx.user, channel_id)
+
+            payload = server.ChannelLeavePayload(
+                username=ctx.user.username, channel_id=channel_id
+            )
+            leave_msg = server.ChannelLeave(timestamp=timestamp, payload=payload)
+            await self.send_msg_to_channel(leave_msg, channel_id)
 
 
 class SubscriptionManager:
@@ -225,8 +235,25 @@ class SubscriptionManager:
         logging.debug(f"{self._channel_members = }")
         logging.debug(f"{self._user_channels = }")
 
+    def remove_user_from_channel(self, user: User, channel_id: int):
+        """
+        Remove a User from a Channel
+        """
+        logging.info(f"Removing {repr(user)} from {repr(channel_id)}")
+
+        self._channel_members[channel_id].remove(user.id)
+
     def get_users_in_channel(self, channel: Channel) -> set[int]:
         """
-        Retrieve all Users ID connected to a Channel
+        Retrieve all Users ID connected to a Channel.
+        Returns empty set if channel has no members.
         """
-        return self._channel_members[channel.id]
+        return self._channel_members.get(channel.id, set())
+
+    def get_channels_id_from_user(self, user: User) -> set[int]:
+        """
+        Retrieve all channels a User is connected to.
+        Returns empty set if user hasn't joined any channels.
+        """
+        logging.debug(f"{self._user_channels = }")
+        return self._user_channels.get(user.id, set())

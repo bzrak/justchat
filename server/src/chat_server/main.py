@@ -73,6 +73,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 data = await websocket.receive_text()
                 await manager.handle_message(websocket, data)
         except WebSocketDisconnect:
+            logging.info(f"Connection closed by the client: {websocket = }")
             await manager.disconnect(websocket)
     except WebSocketDisconnect:
         logging.info("Connection closed by the server: Invalid HELO initiaition")

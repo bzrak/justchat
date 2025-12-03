@@ -12,4 +12,3 @@ class ConnectionContext(BaseModel):
     user: User
     # id: int | None = None
     # username: str
-    channels: set | None = None
