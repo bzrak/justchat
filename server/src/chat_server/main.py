@@ -6,6 +6,12 @@ from fastapi.websockets import WebSocketDisconnect
 from chat_server.api import auth
 from chat_server.connection.manager import ConnectionManager
 from chat_server.db.db import init_db
+from chat_server.infrastructure.channel_manager import ChannelManager
+from chat_server.infrastructure.connection_registry import ConnectionRegistry
+from chat_server.services.authorization_service import AuthenticationService
+from chat_server.services.channel_service import ChannelService
+from chat_server.services.membership_service import MembershipService
+from chat_server.services.message_broker import MessageBroker
 from chat_server.settings import get_settings
 
 import logging
@@ -61,19 +67,34 @@ def root():
     }
 
 
-manager = ConnectionManager()
+connection_registry = ConnectionRegistry()
+channel_manager = ChannelManager()
+auth_service = AuthenticationService()
+membership_service = MembershipService()
+message_broker = MessageBroker(connection_registry)
+channel_service = ChannelService(channel_manager, membership_service, message_broker)
+
+manager = ConnectionManager(
+    connection_registry,
+    channel_manager,
+    auth_service,
+    membership_service,
+    message_broker,
+    channel_service,
+)
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     try:
-        await manager.connect(websocket)
-        try:
-            while True:
-                data = await websocket.receive_text()
-                await manager.handle_message(websocket, data)
-        except WebSocketDisconnect:
-            logging.info(f"Connection closed by the client: {websocket = }")
-            await manager.disconnect(websocket)
+        await manager.accept_connection(websocket)
     except WebSocketDisconnect:
-        logging.info("Connection closed by the server: Invalid HELO initiaition")
+        logging.info("Connection closed by the server: Invalid HELLO initiaition")
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.handle_message(websocket, data)
+    except WebSocketDisconnect:
+        logging.info("Connection closed by the client.")
+        await manager.handle_disconnect(websocket)

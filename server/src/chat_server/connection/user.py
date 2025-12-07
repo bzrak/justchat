@@ -10,3 +10,9 @@ class User(BaseModel):
     @property
     def is_guest(self) -> bool:
         return self.id is None
+
+    def __eq__(self, other):
+        return self.username == other.username
+
+    def __hash__(self):
+        return hash(str(self))

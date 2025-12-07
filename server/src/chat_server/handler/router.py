@@ -9,7 +9,7 @@ from chat_server.protocol.enums import MessageType
 
 HANDLERS = {
     MessageType.CHAT_SEND: chat_handler.handler_chat_send,
-    MessageType.CHANNEL_JOIN_REQUEST: channel_handler.handle_channel_join,
+    MessageType.CHANNEL_JOIN_REQUEST: channel_handler.handler_channel_join,
 }
 
 
