@@ -121,7 +121,7 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
     }
 
     wsRef.current = ws
-  }, [username, enabled])
+  }, [username, enabled, onUsernameAssigned])
 
   const disconnect = useCallback(() => {
     isIntentionalDisconnect.current = true

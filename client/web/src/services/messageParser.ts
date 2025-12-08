@@ -13,7 +13,9 @@ export function registerParser(type: MessageTypeValue, parser: MessageParser) {
 // Parse incoming message
 export function parseMessage(rawData: string): Message | null {
   try {
+    console.log('[MessageParser] Parsing raw data:', rawData);
     const data = JSON.parse(rawData) as any;
+    console.log('[MessageParser] JSON parsed:', data);
 
     // Handle error responses that might only have a "detail" field
     if (data.detail && !data.type) {
@@ -30,19 +32,26 @@ export function parseMessage(rawData: string): Message | null {
       data.payload = errorMessage.payload;
     }
 
-    if (!data.type || !data.timestamp) {
-      console.error("Invalid message structure:", data);
+    if (!data.type) {
+      console.error("[MessageParser] Invalid message structure - missing type:", data);
       return null;
     }
+
+    console.log('[MessageParser] Message type:', data.type);
+    console.log('[MessageParser] Available parsers:', Object.keys(parsers));
 
     const parser = parsers[data.type];
 
     if (!parser) {
-      console.warn("No parser for message type:", data.type);
+      console.warn("[MessageParser] No parser for message type:", data.type);
+      console.warn("[MessageParser] Available parsers are:", Object.keys(parsers));
       return null;
     }
 
-    return parser(data);
+    console.log('[MessageParser] Found parser for type:', data.type);
+    const parsed = parser(data);
+    console.log('[MessageParser] Parser returned:', parsed);
+    return parsed;
 
   } catch (e) {
     console.error("Failed to parse message:", e);

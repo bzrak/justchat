@@ -8,6 +8,9 @@ import { ErrorMessage } from '../components/messages/ErrorMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
+  // HELLO (connection handshake - no renderer needed, handled by WebSocketContext)
+  registerParser(MessageType.HELLO, (data) => data as any);
+
   // CHAT_SEND (server broadcasts with sender info)
   registerParser(MessageType.CHAT_SEND, (data) => data as any);
   registerRenderer(MessageType.CHAT_SEND, ChatSendMessageComponent);
