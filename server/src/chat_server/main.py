@@ -79,7 +79,7 @@ manager = ConnectionManager(
     # channel_manager,
     auth_service,
     # membership_service,
-    # message_broker,
+    message_broker,
     channel_service,
 )
 

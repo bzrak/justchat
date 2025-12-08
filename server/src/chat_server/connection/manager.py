@@ -13,6 +13,7 @@ from chat_server.services.authorization_service import (
     AuthenticationService,
 )
 from chat_server.services.channel_service import ChannelService
+from chat_server.services.message_broker import MessageBroker
 
 SERVER_ONLY_MESSAGES = {
     MessageType.CHANNEL_JOIN,
@@ -30,14 +31,14 @@ class ConnectionManager:
         # channel_manager: ChannelManager,
         auth_service: AuthenticationService,
         # membership_service: MembershipService,
-        # message_broker: MessageBroker,
+        message_broker: MessageBroker,
         channel_service: ChannelService,
     ) -> None:
         self.connections = connection_registry
         # self.channels = channel_manager
         self.auth = auth_service
         # self.membership = membership_service
-        # self.broker = message_broker
+        self.broker = message_broker
         self.channel_srvc = channel_service
 
     async def accept_connection(self, websocket: WebSocket) -> None:
@@ -75,7 +76,8 @@ class ConnectionManager:
         payload = messages.HelloPayload(user=messages.UserFrom.model_validate(user))
         msg = messages.Hello(payload=payload)
 
-        await websocket.send_text(msg.model_dump_json())
+        # await websocket.send_text(msg.model_dump_json())
+        await self.broker.send_to_websocket(websocket, msg)
 
         # Register Connection
         ctx = ConnectionContext(websocket=websocket, user=user)
