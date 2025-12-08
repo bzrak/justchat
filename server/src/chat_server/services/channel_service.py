@@ -1,10 +1,17 @@
 from datetime import datetime
 import logging
+import uuid
 from chat_server.connection.channel import Channel
 from chat_server.connection.user import User
 from chat_server.infrastructure.channel_manager import ChannelManager
-from chat_server.protocol import server
-from chat_server.protocol.message import BaseMessage
+from chat_server.protocol.messages import (
+    BaseMessage,
+    ChannelJoin,
+    ChannelJoinPayload,
+    ChannelLeave,
+    ChannelLeavePayload,
+    UserFrom,
+)
 from chat_server.services.membership_service import MembershipService
 from chat_server.services.message_broker import MessageBroker
 
@@ -84,10 +91,10 @@ class ChannelService:
         """
         Send an alert notification that an User has joined the Channel.
         """
-        payload = server.ChannelJoinPayload(
-            username=user.username, channel_id=channel.id
+        payload = ChannelJoinPayload(
+            channel_id=channel.id, user=UserFrom.model_validate(user)
         )
-        msg = server.ChannelJoin(timestamp=datetime.now(), payload=payload)
+        msg = ChannelJoin(timestamp=datetime.now(), id=uuid.uuid4(), payload=payload)
 
         logging.info(f"User Join Alert: {repr(user)} has joined {repr(channel)}")
 
@@ -97,10 +104,10 @@ class ChannelService:
         """
         Send an alert notification that an User has left the Channel.
         """
-        payload = server.ChannelLeavePayload(
-            username=user.username, channel_id=channel.id
+        payload = ChannelLeavePayload(
+            channel_id=channel.id, user=UserFrom.model_validate(user)
         )
-        msg = server.ChannelLeave(timestamp=datetime.now(), payload=payload)
+        msg = ChannelLeave(timestamp=datetime.now(), id=uuid.uuid4(), payload=payload)
 
         logging.info(f"User Left Alert: {repr(user)} has left {repr(channel)}")
 

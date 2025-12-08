@@ -17,7 +17,7 @@ from chat_server.settings import get_settings
 import logging
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="{asctime}  |  {levelname}  |  {filename}::{funcName}  |  {message}",
     style="{",
     datefmt="%d-%m-%Y %H:%M",

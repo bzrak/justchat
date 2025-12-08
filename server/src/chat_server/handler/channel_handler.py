@@ -5,8 +5,8 @@ from pydantic import ValidationError
 from chat_server.connection.channel import Channel
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
-from chat_server.protocol import client
-from chat_server.protocol.message import BaseMessage
+from chat_server.protocol.basemessage import BaseMessage
+from chat_server.protocol.messages import ChannelJoin
 
 
 async def handler_channel_join(
@@ -17,7 +17,7 @@ async def handler_channel_join(
     """
 
     try:
-        msg_in = client.ChannelJoin.model_validate(message)
+        msg_in = ChannelJoin.model_validate(message)
     except ValidationError:
         await manager.send_error(ctx.websocket, "Malformed message")
         return

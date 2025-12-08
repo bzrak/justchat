@@ -4,18 +4,15 @@ from fastapi.websockets import WebSocketDisconnect
 from pydantic import ValidationError
 
 from chat_server.connection.context import ConnectionContext
-from chat_server.infrastructure.channel_manager import ChannelManager
 from chat_server.infrastructure.connection_registry import ConnectionRegistry
-from chat_server.protocol import client
+from chat_server.protocol import messages
+from chat_server.protocol.basemessage import BaseMessage
 from chat_server.protocol.enums import MessageType
-from chat_server.protocol.message import BaseMessage, ErrorMessage
 from chat_server.services.authorization_service import (
     AuthenticationError,
     AuthenticationService,
 )
 from chat_server.services.channel_service import ChannelService
-from chat_server.services.membership_service import MembershipService
-from chat_server.services.message_broker import MessageBroker
 
 SERVER_ONLY_MESSAGES = {
     MessageType.CHANNEL_JOIN,
@@ -59,9 +56,11 @@ class ConnectionManager:
         # Validate the message received is a proper HELLO
         try:
             hello_msg = await websocket.receive_text()
-            hello = client.Hello.model_validate_json(hello_msg)
+            hello = messages.Hello.model_validate_json(hello_msg)
+            logging.debug(f"{hello =}")
         except ValidationError as e:
             logging.warning(f"Invalid HELLO message {e}")
+            await self.send_error(websocket, "Invalid HELLO message")
             await websocket.close(reason="Invalid HELLO message")
             raise WebSocketDisconnect
 
@@ -72,6 +71,11 @@ class ConnectionManager:
             logging.warning(f"Authentication failed: {e}")
             await websocket.close(reason=str(e))
             raise WebSocketDisconnect
+
+        payload = messages.HelloPayload(user=messages.UserFrom.model_validate(user))
+        msg = messages.Hello(payload=payload)
+
+        await websocket.send_text(msg.model_dump_json())
 
         # Register Connection
         ctx = ConnectionContext(websocket=websocket, user=user)
@@ -98,7 +102,8 @@ class ConnectionManager:
         """
         Send error message to client.
         """
-        err = ErrorMessage(detail=detail)
+        payload = messages.ErrorMessagePayload(detail=detail)
+        err = messages.ErrorMessage(payload=payload)
         await websocket.send_text(err.model_dump_json())
 
     async def handle_message(self, websocket: WebSocket, data: str) -> None:

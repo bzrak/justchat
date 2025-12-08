@@ -7,14 +7,13 @@ class MessageType(StrEnum):
     """
 
     HELLO = "hello"  # First message expected after connecting to the websocket
+    ERROR = "error"
 
     CHAT_SEND = "chat_send"  # Used when a user send a normal message
-    CHAT_BROADCAST = "chat_broadcast"  # Means the message is a broadcast
 
     # Channel
     CHANNEL_JOIN = "channel_join"
     CHANNEL_LEAVE = "channel_leave"  # used when a user leaves a channel
-    CHANNEL_JOIN_REQUEST = "channel_join_request"  # Used when a user joins a channel
 
     # User
     USER_ONLINE = "user_online"  # State user is online

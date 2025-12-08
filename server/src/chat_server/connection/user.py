@@ -1,11 +1,7 @@
-from pydantic import BaseModel
-
-
-# NOTE: Should this be a BaseModel instead of just a normal class ?
-# What if I need to add some methods here ?
-class User(BaseModel):
-    id: int | None = None
-    username: str
+class User:
+    def __init__(self, username: str, id: int | None = None) -> None:
+        self.username = username
+        self.id = id
 
     @property
     def is_guest(self) -> bool:
@@ -16,3 +12,8 @@ class User(BaseModel):
 
     def __hash__(self):
         return hash(str(self))
+
+    def __repr__(self):
+        if self.is_guest:
+            return f"Guest({self.username})"
+        return f"User(id={self.id}, username={self.username})"

@@ -3,13 +3,13 @@ import logging
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.handler import channel_handler, chat_handler
-from chat_server.protocol.message import BaseMessage
+from chat_server.protocol.basemessage import BaseMessage
 from chat_server.protocol.enums import MessageType
 
 
 HANDLERS = {
     MessageType.CHAT_SEND: chat_handler.handler_chat_send,
-    MessageType.CHANNEL_JOIN_REQUEST: channel_handler.handler_channel_join,
+    MessageType.CHANNEL_JOIN: channel_handler.handler_channel_join,
 }
 
 
