@@ -53,21 +53,20 @@ class ConnectionManager:
 
         await websocket.accept()
 
-        # Wait for HELLO Message and
-        # Validate the message received is a proper HELLO
         try:
+            # Wait for HELLO Message and
             hello_msg = await websocket.receive_text()
+            # Validate the message received is a proper HELLO
             hello = messages.Hello.model_validate_json(hello_msg)
             logging.debug(f"{hello =}")
+
+            # Authenticate User
+            user = await self.auth.authenticate(hello.payload.token)
         except ValidationError as e:
             logging.warning(f"Invalid HELLO message {e}")
             await self.send_error(websocket, "Invalid HELLO message")
             await websocket.close(reason="Invalid HELLO message")
             raise WebSocketDisconnect
-
-        # Authenticate User
-        try:
-            user = await self.auth.authenticate(hello.payload.token)
         except AuthenticationError as e:
             logging.warning(f"Authentication failed: {e}")
             await websocket.close(reason=str(e))
