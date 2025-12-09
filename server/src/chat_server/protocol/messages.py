@@ -99,3 +99,16 @@ class ReactAdd(BaseMessage):
 class ReactRemove(BaseMessage):
     type: Literal[MessageType.REACT_REMOVE] = MessageType.REACT_REMOVE
     payload: ReactPayload
+
+
+# Channel Members
+class ChannelMembersPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    channel_id: int
+    members: list[UserFrom]
+
+
+@register_message(MessageType.CHANNEL_MEMBERS)
+class ChannelMembers(BaseMessage):
+    type: Literal[MessageType.CHANNEL_MEMBERS] = MessageType.CHANNEL_MEMBERS
+    payload: ChannelMembersPayload

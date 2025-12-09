@@ -6,6 +6,7 @@ export const MessageType = {
   REACT_REMOVE: "chat_react_remove",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
+  CHANNEL_MEMBERS: "channel_members",
   // Future types go here
 } as const;
 
@@ -144,6 +145,17 @@ export interface ReactRemoveMessageServerToClient extends BaseMessage {
   payload: ReactPayloadServerToClient;
 }
 
+// Channel Members (Server → Client: sent when member list changes)
+export interface ChannelMembersPayload {
+  channel_id: number;
+  members: UserFrom[];
+}
+
+export interface ChannelMembersMessage extends BaseMessage {
+  type: typeof MessageType.CHANNEL_MEMBERS;
+  payload: ChannelMembersPayload;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
@@ -152,4 +164,5 @@ export type Message =
   | ChannelLeaveMessage
   | ErrorMessage
   | ReactAddMessageServerToClient
-  | ReactRemoveMessageServerToClient;
+  | ReactRemoveMessageServerToClient
+  | ChannelMembersMessage;

@@ -4,6 +4,7 @@ import { initializeMessageHandlers } from './config/messageRegistry'
 import { MessageRenderer } from './components/messages/MessageRenderer'
 import { MessageBuilder } from './services/messageBuilder'
 import { Sidebar } from './components/Sidebar'
+import { MembersList } from './components/MembersList'
 import { LoginModal } from './components/LoginModal'
 import { useUser } from './contexts/UserContext'
 import { useWebSocket } from './contexts/WebSocketContext'
@@ -12,6 +13,11 @@ import type { Message } from './types/messages'
 interface Channel {
   id: number
   name: string
+}
+
+interface Member {
+  username: string
+  isOnline: boolean // For now, all members from server are considered online
 }
 
 function App() {
@@ -25,6 +31,12 @@ function App() {
   const [joinChannelId, setJoinChannelId] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const joinedChannelsRef = useRef<Set<number>>(new Set())
+
+  // Store members per channel (channelId -> Member[])
+  const [channelMembers, setChannelMembers] = useState<Map<number, Member[]>>(new Map())
+
+  // Track processed message IDs to avoid duplicate processing
+  const processedMessageIds = useRef<Set<string>>(new Set())
 
   // Initialize message handlers on mount
   useEffect(() => {
@@ -41,6 +53,54 @@ function App() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // Listen for CHANNEL_MEMBERS messages to update member list
+  useEffect(() => {
+    console.log('[App] Processing messages, total count:', messages.length)
+
+    // Process ALL unprocessed CHANNEL_MEMBERS messages, not just the latest
+    messages.forEach((message, index) => {
+      // Skip if already processed
+      const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
+
+      console.log(`[App] Checking message ${index}:`, {
+        type: message.type,
+        messageKey,
+        alreadyProcessed: processedMessageIds.current.has(messageKey)
+      })
+
+      if (processedMessageIds.current.has(messageKey)) {
+        return
+      }
+
+      if (message.type === 'channel_members') {
+        const payload = message.payload as { channel_id: number; members: { username: string }[] }
+        const members: Member[] = payload.members.map(m => ({
+          username: m.username,
+          isOnline: true // All members in the list are currently online
+        }))
+
+        console.log(`[App] UPDATING members for channel ${payload.channel_id}:`, {
+          memberCount: members.length,
+          members: members.map(m => m.username)
+        })
+
+        setChannelMembers(prev => {
+          const updated = new Map(prev)
+          updated.set(payload.channel_id, members)
+          console.log('[App] New channelMembers state:', {
+            channelId: payload.channel_id,
+            memberCount: members.length,
+            allChannels: Array.from(updated.keys())
+          })
+          return updated
+        })
+
+        // Mark as processed
+        processedMessageIds.current.add(messageKey)
+      }
+    })
   }, [messages])
 
   // Filter messages for current channel
@@ -290,6 +350,22 @@ function App() {
           </form>
         </div>
       </div>
+
+      {/* Right Sidebar - Members List */}
+      <MembersList
+        members={(() => {
+          const members = currentChannelId !== null ? (channelMembers.get(currentChannelId) || []) : []
+          console.log('[App] Passing members to MembersList:', {
+            currentChannelId,
+            memberCount: members.length,
+            members: members.map(m => m.username),
+            allChannelsInMap: Array.from(channelMembers.keys()),
+            mapSize: channelMembers.size
+          })
+          return members
+        })()}
+        currentChannelId={currentChannelId}
+      />
     </div>
   )
 }

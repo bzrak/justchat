@@ -10,6 +10,8 @@ from chat_server.protocol.messages import (
     ChannelJoinPayload,
     ChannelLeave,
     ChannelLeavePayload,
+    ChannelMembers,
+    ChannelMembersPayload,
     UserFrom,
 )
 from chat_server.services.membership_service import MembershipService
@@ -42,6 +44,14 @@ class ChannelService:
         """
         self._membershipsrvc.join(user, channel)
 
+        # Send a list with the members in the channel
+        members = self._membershipsrvc.get_channel_members(channel)
+        channel_members = ChannelMembersPayload(
+            channel_id=channel.id, members=list(members)
+        )
+        msg = ChannelMembers(payload=channel_members)
+        await self.send_to_channel(channel, msg)
+
         await self._alert_user_join(user, channel)
 
     async def leave_channel(self, user: User, channel: Channel) -> None:
@@ -59,6 +69,13 @@ class ChannelService:
         channels = self._membershipsrvc.leave_all(user)
 
         for channel in channels:
+            # Send a list with the members in the channel
+            members = self._membershipsrvc.get_channel_members(channel)
+            channel_members = ChannelMembersPayload(
+                channel_id=channel.id, members=list(members)
+            )
+            msg = ChannelMembers(payload=channel_members)
+            await self._broker.send_to_channel(members, msg)
             await self._alert_user_left(user, channel)
 
     def get_channel_members(self, channel: Channel) -> set[User]:

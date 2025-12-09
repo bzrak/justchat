@@ -16,3 +16,4 @@ class MessageType(StrEnum):
     # Channel
     CHANNEL_JOIN = "channel_join"
     CHANNEL_LEAVE = "channel_leave"  # used when a user leaves a channel
+    CHANNEL_MEMBERS = "channel_members"  # used to list all the members in a channel

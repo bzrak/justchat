@@ -35,5 +35,9 @@ export function initializeMessageHandlers() {
   registerParser(MessageType.ERROR, (data) => data as any);
   registerRenderer(MessageType.ERROR, ErrorMessage);
 
+  // CHANNEL_MEMBERS (server sends member list updates)
+  registerParser(MessageType.CHANNEL_MEMBERS, (data) => data as any);
+  // No renderer needed - handled directly in App state
+
   // Future types registered here
 }
