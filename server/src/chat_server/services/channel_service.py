@@ -47,7 +47,8 @@ class ChannelService:
         # Send a list with the members in the channel
         members = self._membershipsrvc.get_channel_members(channel)
         channel_members = ChannelMembersPayload(
-            channel_id=channel.id, members=list(members)
+            channel_id=channel.id,
+            members=[UserFrom.model_validate(user) for user in members],
         )
         msg = ChannelMembers(payload=channel_members)
         await self.send_to_channel(channel, msg)
@@ -72,7 +73,8 @@ class ChannelService:
             # Send a list with the members in the channel
             members = self._membershipsrvc.get_channel_members(channel)
             channel_members = ChannelMembersPayload(
-                channel_id=channel.id, members=list(members)
+                channel_id=channel.id,
+                members=[UserFrom.model_validate(user) for user in members],
             )
             msg = ChannelMembers(payload=channel_members)
             await self._broker.send_to_channel(members, msg)
