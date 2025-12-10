@@ -4,8 +4,10 @@ import uuid
 
 from pydantic import ValidationError
 
+from chat_server.db.db import async_session
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
+from chat_server.db import crud
 from chat_server.protocol.enums import MessageType
 from chat_server.protocol.messages import (
     ChatSend,
@@ -66,6 +68,10 @@ async def handler_chat_send(
                 "You must join this channel before sending messages",
             )
             return
+
+        # Save message to database
+        async with async_session() as session:
+            await crud.create_message(session, server_response)
 
         await manager.channel_srvc.send_to_channel(channel, server_response)
         logging.info(f"Message sent to channel {repr(channel)} by {repr(ctx.user)}")
