@@ -46,16 +46,17 @@ async def handler_channel_join(
                 session, msg_in.payload.channel_id
             )
             print(f"{history_messages = }")
-        for history_msg in history_messages:
-            payload = ChatSendPayload(
-                channel_id=history_msg.channel_id,
-                sender=UserFrom(username=history_msg.sender_username),
-                content=history_msg.content,
-            )
-            history_send = ChatSend(
-                timestamp=history_msg.timestamp, id=history_msg.id, payload=payload
-            )
-            await manager.broker.send_to_user(ctx.user, history_send)
+        if history_messages is not None:
+            for history_msg in history_messages:
+                payload = ChatSendPayload(
+                    channel_id=history_msg.channel_id,
+                    sender=UserFrom(username=history_msg.sender_username),
+                    content=history_msg.content,
+                )
+                history_send = ChatSend(
+                    timestamp=history_msg.timestamp, id=history_msg.id, payload=payload
+                )
+                await manager.broker.send_to_user(ctx.user, history_send)
 
         await manager.channel_srvc.join_channel(ctx.user, channel_response)
         logging.info(f"{repr(ctx.user)} joined {repr(channel_response)}")
