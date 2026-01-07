@@ -44,7 +44,7 @@ class Hello(BaseMessage):
 class ChannelJoinPayload(BaseModel):
     model_config = {"extra": "forbid"}
     channel_id: int
-    user: UserFrom | None = None
+    user: UserFrom | None = None  # Server-only
 
 
 @register_message(MessageType.CHANNEL_JOIN)
@@ -57,7 +57,7 @@ class ChannelJoin(BaseMessage):
 class ChannelLeavePayload(BaseModel):
     model_config = {"extra": "forbid"}
     channel_id: int
-    user: UserFrom | None = None
+    user: UserFrom | None = None  # Server-only
 
 
 @register_message(MessageType.CHANNEL_LEAVE)
