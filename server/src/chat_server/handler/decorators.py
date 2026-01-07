@@ -67,3 +67,20 @@ def require_membership(handler):
         )
 
     return wrapper
+
+
+def require_permission(permission: str):
+    """
+    Check for permission
+    """
+
+    def decorator(handler):
+        @wraps(handler)
+        async def wrapper(ctx, message, manager, *, channel, **kwargs):
+            # TODO: Implement permission checking
+            logging.warning(f"Permission check '{permission}' - allowing {ctx.user}")
+            return await handler(ctx, message, manager, channel=channel, **kwargs)
+
+        return wrapper
+
+    return decorator

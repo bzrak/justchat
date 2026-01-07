@@ -8,6 +8,7 @@ from chat_server.connection.manager import ConnectionManager
 from chat_server.handler.decorators import (
     require_channel,
     require_membership,
+    require_permission,
     validate_message,
 )
 from chat_server.protocol.basemessage import BaseMessage
@@ -17,6 +18,7 @@ from chat_server.protocol.messages import KickCommand
 @validate_message(KickCommand)
 @require_channel
 @require_membership
+@require_permission("kick")
 async def handler_kick(
     ctx: ConnectionContext,
     message: BaseMessage,
