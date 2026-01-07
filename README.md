@@ -9,6 +9,8 @@
 - User Presence
 - Typing indicator
 - Reactions
+- Chat Commands (/command)
+  - Kick
 
 ## TODOs
 
@@ -21,10 +23,15 @@
   - [ ] Smaller fields, e.g. `user` -> `u`
 - [ ] Add **pagination** for the message history
 - [X] Add typing indicator
-- [ ] Add **slash commands**
-  - [ ] Kick user
+- [X] Add **slash commands**
+  - [X] Kick user
   - [ ] Mute user
 - [ ] Add **more tests**
+
+## Need fixing
+
+- [ ] ChannelMember when leaving and joining is not the best.
+  - Only sent when leaving all channels.
 
 ## Message Protocol
 
