@@ -12,6 +12,7 @@ from chat_server.services.authorization_service import AuthenticationService
 from chat_server.services.channel_service import ChannelService
 from chat_server.services.membership_service import MembershipService
 from chat_server.services.message_broker import MessageBroker
+from chat_server.services.moderation_service import ModerationService
 from chat_server.settings import get_settings
 
 import logging
@@ -83,6 +84,7 @@ auth_service = AuthenticationService()
 membership_service = MembershipService()
 message_broker = MessageBroker(connection_registry)
 channel_service = ChannelService(channel_manager, membership_service, message_broker)
+moderation_service = ModerationService()
 
 manager = ConnectionManager(
     connection_registry,
@@ -91,6 +93,7 @@ manager = ConnectionManager(
     # membership_service,
     message_broker,
     channel_service,
+    moderation_service,
 )
 
 

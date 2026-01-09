@@ -1,8 +1,10 @@
+from datetime import timedelta
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import select, selectable
+from sqlalchemy.sql import select
 
 from chat_server.api.models import UserCreate
-from chat_server.db.models import MessageTable, UserTable
+from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash
 
@@ -91,3 +93,60 @@ async def get_channel_messages(
     stmt = select(MessageTable).where(MessageTable.channel_id == channel_id)
     res = await session.execute(stmt)
     return list(res.scalars().all())
+
+
+async def mute_user(
+    session: AsyncSession,
+    target_id: int,
+    by_id: int,
+    channel_id: int,
+    duration: int | None = None,
+    reason: str = "",
+):
+    """
+    Store mute in database
+    """
+    try:
+        if not await get_user_by_id(session, target_id):
+            raise ValueError("Target user does not exist.")
+        if not await get_user_by_id(session, by_id):
+            raise ValueError("Issuer user does not exist.")
+
+        mute_db = MuteTable(
+            target_id=target_id,
+            by_id=by_id,
+            channel_id=channel_id,
+            expires_at=func.now() + timedelta(seconds=duration) if duration else None,
+        )
+
+        session.add(mute_db)
+        await session.commit()
+        await session.refresh(mute_db)
+        logging.info(f"Mute logged: {mute_db}")
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Failed to mute user: {e}")
+        raise e
+
+
+async def get_mute(
+    session: AsyncSession, target_id: int, channel_id: int
+) -> MuteTable | None:
+    """
+    Check if `target_id` is muted in `channel_id`.
+    """
+    try:
+        if not await get_user_by_id(session, target_id):
+            raise ValueError("Target user does not exist.")
+
+        stmt = select(MuteTable).where(
+            MuteTable.target_id == target_id,
+            MuteTable.channel_id == channel_id,
+            (MuteTable.expires_at.is_(None)) | (MuteTable.expires_at > func.now()),
+        )
+        res = await session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    except Exception as e:
+        logging.error(f"Failed to check mute: {e}")
+        raise e

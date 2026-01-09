@@ -141,3 +141,17 @@ class KickCommandPayload(BaseModel):
 class KickCommand(BaseMessage):
     type: Literal[MessageType.CHAT_KICK] = MessageType.CHAT_KICK
     payload: KickCommandPayload
+
+
+class MuteCommandPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    channel_id: int
+    target: str
+    duration: int | None = None
+    reason: str = ""
+
+
+@register_message(MessageType.CHAT_MUTE)
+class MuteCommand(BaseMessage):
+    type: Literal[MessageType.CHAT_MUTE] = MessageType.CHAT_MUTE
+    payload: MuteCommandPayload

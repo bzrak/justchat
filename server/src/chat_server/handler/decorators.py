@@ -21,6 +21,7 @@ def validate_message(message_class: Type[BaseMessage]):
                 msg = message_class.model_validate(message)
             except ValidationError:
                 await manager.send_error(ctx.websocket, "Malformed message.")
+                logging.info(f"User sent malformed message: {message}")
                 return
             return await handler(ctx, message, manager, msg_in=msg, **kwargs)
 
@@ -84,3 +85,20 @@ def require_permission(permission: str):
         return wrapper
 
     return decorator
+
+
+def require_not_muted(handler):
+    """
+    Ensure the user is not muted in the channel
+    """
+
+    @wraps(handler)
+    async def wrapper(ctx, message, manager, *, msg_in, channel, **kwargs):
+        if await manager.moderation.is_muted(ctx.user, channel):
+            await manager.send_error(ctx.websocket, "You are muted in this channel.")
+            return
+        return await handler(
+            ctx, message, manager, msg_in=msg_in, channel=channel, **kwargs
+        )
+
+    return wrapper

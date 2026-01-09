@@ -12,7 +12,7 @@ from chat_server.handler.decorators import (
     validate_message,
 )
 from chat_server.protocol.basemessage import BaseMessage
-from chat_server.protocol.messages import KickCommand
+from chat_server.protocol.messages import KickCommand, MuteCommand
 
 
 @validate_message(KickCommand)
@@ -44,13 +44,39 @@ async def handler_kick(
             await manager.channel_srvc.send_to_channel(channel, kick_msg)
             await manager.channel_srvc.leave_channel(target, channel)
     except Exception as e:
-        logging.error(f"Error handling CHAT_SEND: {e}")
+        logging.error(f"Error handling CHAT_KICK: {e}")
 
 
+@validate_message(MuteCommand)
+@require_channel
+@require_membership
+@require_permission("mute")
 async def handler_mute(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,  # require_channel
+    channel: Channel,  # @require_membership
 ):
     """
     Handle mute command
     """
-    pass
+    try:
+        payload = msg_in.payload
+        target = manager.channel_srvc.find_member_by_username(
+            payload.channel_id, payload.target
+        )
+
+        if target:
+            # TODO: Craft Kick Message
+            await manager.moderation.mute_user(
+                target=target,
+                issuer=ctx.user,
+                channel=channel,
+                duration=payload.duration,
+                reason=payload.reason,
+            )
+            logging.info(f"{repr(ctx.user)} is muting {target}.")
+    except Exception as e:
+        logging.error(f"Error handling CHAT_MUTE: {e}")

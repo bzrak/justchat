@@ -10,6 +10,7 @@ from chat_server.db.db import async_session
 from chat_server.handler.decorators import (
     require_channel,
     require_membership,
+    require_not_muted,
     validate_message,
 )
 from chat_server.protocol.basemessage import BaseMessage
@@ -29,6 +30,7 @@ from chat_server.protocol.messages import (
 @validate_message(ChatSend)
 @require_channel
 @require_membership
+@require_not_muted
 async def handler_chat_send(
     ctx: ConnectionContext,
     message: BaseMessage,

@@ -1,6 +1,6 @@
 from datetime import datetime
-from uuid import UUID
-from sqlalchemy import ForeignKey
+from uuid import UUID, uuid4
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import DateTime, Integer, String
 
@@ -37,3 +37,16 @@ class MessageTable(Base):
     )
     timestamp: Mapped[datetime] = mapped_column(DateTime)
     content: Mapped[str] = mapped_column(String)
+
+
+class MuteTable(Base):
+    __tablename__ = "mutes"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    target_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    by_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    reason: Mapped[str] = mapped_column(String(255), nullable=True)
+    # channel_id: Mapped[int] = mapped_column(ForeignKey("channels.id"))
+    channel_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)

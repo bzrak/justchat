@@ -14,6 +14,7 @@ from chat_server.services.authorization_service import (
 )
 from chat_server.services.channel_service import ChannelService
 from chat_server.services.message_broker import MessageBroker
+from chat_server.services.moderation_service import ModerationService
 
 SERVER_ONLY_MESSAGES = {
     MessageType.CHANNEL_JOIN,
@@ -33,6 +34,7 @@ class ConnectionManager:
         # membership_service: MembershipService,
         message_broker: MessageBroker,
         channel_service: ChannelService,
+        moderation_service: ModerationService,
     ) -> None:
         self.connections = connection_registry
         # self.channels = channel_manager
@@ -40,6 +42,7 @@ class ConnectionManager:
         # self.membership = membership_service
         self.broker = message_broker
         self.channel_srvc = channel_service
+        self.moderation = moderation_service
 
     async def accept_connection(self, websocket: WebSocket) -> None:
         """
