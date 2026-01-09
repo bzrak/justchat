@@ -79,6 +79,12 @@ def require_permission(permission: str):
         @wraps(handler)
         async def wrapper(ctx, message, manager, *, channel, **kwargs):
             # TODO: Implement permission checking
+            if ctx.user.is_guest:
+                await manager.send_error(
+                    ctx.websocket, "You don't have permission to run this command."
+                )
+                return
+
             logging.warning(f"Permission check '{permission}' - allowing {ctx.user}")
             return await handler(ctx, message, manager, channel=channel, **kwargs)
 
