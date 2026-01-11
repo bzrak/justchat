@@ -1,3 +1,5 @@
+from datetime import datetime
+from uuid import uuid4
 import pytest
 import pytest_asyncio
 from sqlalchemy import StaticPool
@@ -6,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from chat_server.api.models import UserCreate
 from chat_server.db.models import Base
+from chat_server.protocol.messages import ChatSend, ChatSendPayload, UserFrom
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -53,3 +56,12 @@ def user_create_obj(sample_user):
     Provides a Pydantic UserCreate object for testing.
     """
     return UserCreate(**sample_user)
+
+
+@pytest.fixture
+def sample_chat_send() -> ChatSend:
+    sender = UserFrom(username="testuser", is_guest=False)
+    payload = ChatSendPayload(
+        channel_id=1, sender=sender, content="This is a test message"
+    )
+    return ChatSend(timestamp=datetime.now(), id=uuid4(), payload=payload)
