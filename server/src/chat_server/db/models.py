@@ -31,9 +31,9 @@ class ChannelTable(Base):
 class MessageTable(Base):
     __tablename__ = "messages"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     channel_id: Mapped[int] = mapped_column(Integer)
-    sender_id: Mapped[int | None] = mapped_column(ForeignKey("user.id", ondelete="SET NULL"))
+    sender_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="SET NULL"))
     sender_username: Mapped[str] = mapped_column(
         String(USERNAME_MAX_LENGTH), nullable=False
     )

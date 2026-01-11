@@ -1,8 +1,8 @@
 from datetime import timedelta
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
-
 from chat_server.api.models import UserCreate
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
@@ -11,7 +11,7 @@ from chat_server.security.utils import get_password_hash
 import logging
 
 
-async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable:
+async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable | None:
     """
     Create an User in the database. Returns the User created.
     """
@@ -25,6 +25,9 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable:
         await session.refresh(user_db)
         logging.debug(f"Created user successfully: {user_db}")
         return user_db
+    except IntegrityError:
+        logging.warning("Attempted to create user with existing username.")
+        return None
     except Exception as e:
         await session.rollback()
         logging.warning(f"Failed to add a user: {e}")
@@ -94,11 +97,10 @@ async def create_message(
     """
     Store a message in the database.
     """
-    sender_id = None
     user_db = await get_user_by_username(session, message.payload.sender.username)
-    if user_db:
-        # Authenticated User
-        sender_id = user_db.id
+    if not user_db:
+        return None
+    sender_id = user_db.id
     sender_username = message.payload.sender.username
     channel_id = message.payload.channel_id
     timestamp = message.timestamp
