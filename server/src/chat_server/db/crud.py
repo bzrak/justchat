@@ -42,6 +42,7 @@ async def create_guest_user(session: AsyncSession) -> UserTable:
     This user is deleted after 1 day.
     """
     from random import randint
+    from secrets import token_urlsafe
 
     # Ensure there will be 0 in front
     # e.g. 0024, 0432, 0002
@@ -53,8 +54,7 @@ async def create_guest_user(session: AsyncSession) -> UserTable:
         if not await get_user_by_username(session, guest_username):
             break
 
-    # FIX: Generate random password
-    guest_password = "passpasspass"
+    guest_password = token_urlsafe()
 
     user_db = UserTable(
         username=guest_username,
