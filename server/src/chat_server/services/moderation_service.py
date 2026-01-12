@@ -40,6 +40,5 @@ class ModerationService:
         """
         Check if `target` is muted at the `channel`.
         """
-        # FIX: Handle mute in Guest User
         async with async_session() as session:
             return await crud.get_mute(session, target.id, channel.id) is not None
