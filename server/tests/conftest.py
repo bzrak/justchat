@@ -96,6 +96,25 @@ def test_user():
 
 
 @pytest.fixture
+def test_2_users():
+    user1 = User(username="testuser1", id=1, is_guest=True)
+    user2 = User(username="testuser2", id=2, is_guest=True)
+    return user1, user2
+
+
+@pytest.fixture
+def guest_user():
+    """Guest user for permission tests."""
+    return User(username="Guest#1234", id=None, is_guest=True)
+
+
+@pytest.fixture
+def target_user():
+    """Target user for command tests (kick, mute, etc)."""
+    return User(username="victim", id=2, is_guest=False)
+
+
+@pytest.fixture
 def test_channel():
     """Domain Channel object for testing."""
     return Channel(id=1, name="general")
