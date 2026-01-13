@@ -6,13 +6,20 @@ services:
       target: production
     container_name: chat_server
     environment:
-      # Database configuration. Change this
-      DATABASE_URL: postgresql+psycopg://chatuser:chatpassword@postgres:5432/chatdb
+      SUPERUSER_USERNAME: "admin"
+      SUPERUSER_PASSWORD: "admin"
+
+      POSTGRES_USER: "changethis"
+      POSTGRES_PASSWORD: "changethis"
+      POSTGRES_HOST: "changethis"
+      POSTGRES_PORT: "changethis"
+      POSTGRES_DB: "changethis"
+
       # Server configuration
       HOST: 0.0.0.0
       PORT: 8000
       # CHANGE THIS
-      SECRET_KEY: your-secret-key-change-this-in-production
+      SECRET_KEY: "your-secret-key-change-this-in-production"
       ENVIRONMENT: production
     ports:
       - "8000:8000"
