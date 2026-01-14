@@ -1,14 +1,12 @@
 from datetime import timedelta
-import logging
+
 from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
-from sqlalchemy.exc import IntegrityError
 
 from chat_server.api.models import Token, UserCreate, UserLogin, UserPublic
 from chat_server.db import crud
 from chat_server.deps import DBSession
 from chat_server.security.utils import generate_access_token, verify_password_hash
-
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

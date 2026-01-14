@@ -1,14 +1,15 @@
+import logging
 from datetime import timedelta
+
 from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
+
 from chat_server.api.models import UserCreate
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash
-
-import logging
 
 
 async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable | None:

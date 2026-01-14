@@ -1,5 +1,6 @@
 import re
 from typing import Annotated
+
 from pydantic import BaseModel, Field, field_validator
 from pydantic.types import StringConstraints
 

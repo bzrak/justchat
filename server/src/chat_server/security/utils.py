@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from passlib.hash import argon2
+
 import jwt
+from passlib.hash import argon2
 
 from chat_server.settings import get_settings
 
