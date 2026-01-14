@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # API Routes
-api_router = APIRouter()
+api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 api_router.include_router(auth.router)
 
 
@@ -70,13 +70,15 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def root():
-    """Root endpoint."""
-    return {
-        "message": "Chat Server API",
-        "environment": settings.ENVIRONMENT,
-    }
+if settings.is_development:
+
+    @app.get("/")
+    def root():
+        """Root endpoint."""
+        return {
+            "message": "Chat Server API",
+            "environment": settings.ENVIRONMENT,
+        }
 
 
 connection_registry = ConnectionRegistry()
