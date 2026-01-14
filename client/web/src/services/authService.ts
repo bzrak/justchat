@@ -43,7 +43,7 @@ export const authService = {
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export const authService = {
    */
   async signup(credentials: SignupCredentials): Promise<UserPublic> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ export const authService = {
    */
   async getCurrentUser(token: string): Promise<UserPublic> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
