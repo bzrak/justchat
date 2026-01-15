@@ -11,7 +11,7 @@ interface WebSocketContextType {
   reconnect: () => void
   disconnect: () => void
   clearMessages: () => void
-  isReady: boolean // True after HELLO is sent and connection is established
+  isReady: boolean
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined)
@@ -21,8 +21,8 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
 interface WebSocketProviderProps {
   children: ReactNode
   username: string
-  enabled?: boolean // Allow disabling WebSocket until user is ready
-  onUsernameAssigned?: (username: string, isGuest: boolean) => void // Callback for server-assigned username
+  enabled?: boolean
+  onUsernameAssigned?: (username: string, isGuest: boolean) => void
 }
 
 export function WebSocketProvider({ children, username, enabled = true, onUsernameAssigned }: WebSocketProviderProps) {
@@ -35,70 +35,41 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
 
   const connect = useCallback(() => {
     if (!enabled || !username) {
-      console.log('WebSocket connection disabled or no username')
       return
     }
 
-    // Don't reconnect if already connected
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already connected')
       return
     }
 
-    console.log('Connecting to WebSocket...')
     const ws = new WebSocket(WS_URL)
 
     ws.onopen = () => {
-      console.log('Connected to WebSocket')
       setIsConnected(true)
 
-      // Get token if available
       const token = tokenStorage.getToken()
 
-      // Send Hello message with optional token (no username - server assigns it)
       const helloMessage = MessageBuilder.hello(token || undefined)
       ws.send(JSON.stringify(helloMessage))
-      console.log('Sent Hello:', helloMessage)
-
-      // Note: Will mark as ready after receiving HELLO response from server
     }
 
     ws.onmessage = (event) => {
-      console.log('[WebSocket] Raw message received:', event.data)
       const parsedMessage = parseMessage(event.data)
-      console.log('[WebSocket] Parsed message:', parsedMessage)
 
       if (parsedMessage) {
-        // Handle HELLO response from server
         if (parsedMessage.type === 'hello') {
-          console.log('[WebSocket] HELLO response detected')
           const helloPayload = parsedMessage.payload as any
-          console.log('[WebSocket] HELLO payload:', helloPayload)
 
           if (helloPayload.user?.username) {
-            console.log('[WebSocket] Server assigned username:', helloPayload.user.username)
-            console.log('[WebSocket] Server assigned is_guest:', helloPayload.user.is_guest)
-            console.log('[WebSocket] onUsernameAssigned callback exists?', !!onUsernameAssigned)
-
-            // Update username with server-assigned value (for guests)
             if (onUsernameAssigned) {
-              console.log('[WebSocket] Calling onUsernameAssigned with:', helloPayload.user.username, helloPayload.user.is_guest)
               onUsernameAssigned(helloPayload.user.username, helloPayload.user.is_guest || false)
-            } else {
-              console.warn('[WebSocket] onUsernameAssigned callback is not provided!')
             }
-          } else {
-            console.warn('[WebSocket] HELLO payload missing user.username')
           }
 
-          // Mark as ready after HELLO confirmation
           setIsReady(true)
-          console.log('[WebSocket] Connection marked as ready')
         }
 
         setMessages(prev => [...prev, parsedMessage])
-      } else {
-        console.warn('[WebSocket] Failed to parse message')
       }
     }
 
@@ -107,14 +78,11 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
     }
 
     ws.onclose = (event) => {
-      console.log('Disconnected from WebSocket', event.code, event.reason)
       setIsConnected(false)
       setIsReady(false)
       wsRef.current = null
 
-      // Auto-reconnect unless intentional disconnect
       if (!isIntentionalDisconnect.current && enabled) {
-        console.log('Attempting to reconnect in 3 seconds...')
         reconnectTimeoutRef.current = setTimeout(() => {
           connect()
         }, 3000)
@@ -130,7 +98,6 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
       clearTimeout(reconnectTimeoutRef.current)
     }
     if (wsRef.current) {
-      // Remove event listeners before closing
       wsRef.current.onopen = null
       wsRef.current.onmessage = null
       wsRef.current.onerror = null
@@ -143,7 +110,6 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
   }, [])
 
   const reconnect = useCallback(() => {
-    console.log('Manual reconnect triggered')
     isIntentionalDisconnect.current = false
     disconnect()
     setTimeout(() => {
@@ -154,7 +120,6 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message))
-      console.log('Sent message:', message)
     } else {
       console.error('WebSocket not connected')
     }
@@ -164,7 +129,6 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
     setMessages([])
   }, [])
 
-  // Connect on mount only - do NOT reconnect on username change
   useEffect(() => {
     isIntentionalDisconnect.current = false
     connect()
@@ -173,7 +137,7 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
       disconnect()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty deps - only connect on mount
+  }, [])
 
   const value: WebSocketContextType = {
     isConnected,

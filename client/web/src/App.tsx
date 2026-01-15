@@ -20,7 +20,7 @@ interface Channel {
 
 interface Member {
   username: string
-  isOnline: boolean // For now, all members from server are considered online
+  isOnline: boolean
   isGuest: boolean
 }
 
@@ -37,58 +37,39 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const joinedChannelsRef = useRef<Set<number>>(new Set())
 
-  // Store members per channel (channelId -> Member[])
   const [channelMembers, setChannelMembers] = useState<Map<number, Member[]>>(new Map())
 
-  // Track processed message IDs to avoid duplicate processing
   const processedMessageIds = useRef<Set<string>>(new Set())
 
-  // Track typing users per channel (channelId -> Set<username>)
   const [typingUsers, setTypingUsers] = useState<Map<number, Map<string, number>>>(new Map())
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  const lastTypingSentRef = useRef<Map<number, number>>(new Map()) // Track when we last sent TYPING_START per channel
+  const lastTypingSentRef = useRef<Map<number, number>>(new Map())
 
-  // Command autocomplete state
   const [showCommandAutocomplete, setShowCommandAutocomplete] = useState(false)
   const [filteredCommands, setFilteredCommands] = useState<Command[]>([])
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0)
   const messageInputRef = useRef<HTMLInputElement>(null)
 
-  // Mute state tracking
   const [muteEndTime, setMuteEndTime] = useState<number | null>(null)
   const [muteTimeRemaining, setMuteTimeRemaining] = useState<number>(0)
 
-  // Initialize message handlers on mount
   useEffect(() => {
     initializeMessageHandlers()
   }, [])
 
-  // Reset joined channels when connection is lost
   useEffect(() => {
     if (!isReady) {
       joinedChannelsRef.current.clear()
     }
   }, [isReady])
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Listen for CHANNEL_MEMBERS messages to update member list
   useEffect(() => {
-    console.log('[App] Processing messages, total count:', messages.length)
-
-    // Process ALL unprocessed CHANNEL_MEMBERS messages, not just the latest
     messages.forEach((message, index) => {
-      // Skip if already processed
       const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
-
-      console.log(`[App] Checking message ${index}:`, {
-        type: message.type,
-        messageKey,
-        alreadyProcessed: processedMessageIds.current.has(messageKey)
-      })
 
       if (processedMessageIds.current.has(messageKey)) {
         return
@@ -98,33 +79,21 @@ function App() {
         const payload = message.payload as { channel_id: number; members: { username: string; is_guest: boolean }[] }
         const members: Member[] = payload.members.map(m => ({
           username: m.username,
-          isOnline: true, // All members in the list are currently online
+          isOnline: true,
           isGuest: m.is_guest
         }))
-
-        console.log(`[App] UPDATING members for channel ${payload.channel_id}:`, {
-          memberCount: members.length,
-          members: members.map(m => m.username)
-        })
 
         setChannelMembers(prev => {
           const updated = new Map(prev)
           updated.set(payload.channel_id, members)
-          console.log('[App] New channelMembers state:', {
-            channelId: payload.channel_id,
-            memberCount: members.length,
-            allChannels: Array.from(updated.keys())
-          })
           return updated
         })
 
-        // Mark as processed
         processedMessageIds.current.add(messageKey)
       }
     })
   }, [messages])
 
-  // Listen for TYPING_START messages to update typing indicators
   useEffect(() => {
     messages.forEach((message, index) => {
       const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
@@ -134,20 +103,14 @@ function App() {
       }
 
       if (message.type === 'chat_typing') {
-        console.log('[App] TYPING_START message received:', message)
         const payload = message.payload as { channel_id: number; user?: { username: string } }
-        console.log('[App] Typing payload:', payload)
-        console.log('[App] Current username:', username)
 
-        // Ignore typing from ourselves or if no user info
         if (!payload.user) {
-          console.log('[App] No user field in typing message, ignoring')
           processedMessageIds.current.add(messageKey)
           return
         }
 
         if (payload.user.username === username) {
-          console.log('[App] Typing is from ourselves, ignoring')
           processedMessageIds.current.add(messageKey)
           return
         }
@@ -156,31 +119,20 @@ function App() {
         const channelId = payload.channel_id
         const timeoutKey = `${channelId}-${typingUsername}`
 
-        console.log(`[App] Adding ${typingUsername} to typing users for channel ${channelId}`)
-
-        // Clear existing timeout for this user in this channel
         const existingTimeout = typingTimeoutsRef.current.get(timeoutKey)
         if (existingTimeout) {
           clearTimeout(existingTimeout)
         }
 
-        // Add user to typing set
         setTypingUsers(prev => {
           const updated = new Map(prev)
           const channelTyping = updated.get(channelId) || new Map()
           channelTyping.set(typingUsername, Date.now())
           updated.set(channelId, new Map(channelTyping))
-          console.log('[App] Updated typingUsers:', {
-            channelId,
-            typingInChannel: Array.from(channelTyping.keys()),
-            allChannels: Array.from(updated.keys())
-          })
           return updated
         })
 
-        // Set timeout to remove typing indicator after 10 seconds
         const timeout = setTimeout(() => {
-          console.log(`[App] Timeout: Removing ${typingUsername} from typing users for channel ${channelId}`)
           setTypingUsers(prev => {
             const updated = new Map(prev)
             const channelTyping = updated.get(channelId)
@@ -199,11 +151,9 @@ function App() {
 
         typingTimeoutsRef.current.set(timeoutKey, timeout)
 
-        // Mark as processed
         processedMessageIds.current.add(messageKey)
       }
 
-      // Clear typing indicator when user sends a message
       if (message.type === 'chat_send') {
         const payload = message.payload as { channel_id: number; sender?: { username: string } }
         if (payload.sender?.username) {
@@ -211,16 +161,12 @@ function App() {
           const senderUsername = payload.sender.username
           const timeoutKey = `${channelId}-${senderUsername}`
 
-          console.log(`[App] Chat message sent by ${senderUsername}, clearing typing indicator`)
-
-          // Clear timeout
           const existingTimeout = typingTimeoutsRef.current.get(timeoutKey)
           if (existingTimeout) {
             clearTimeout(existingTimeout)
             typingTimeoutsRef.current.delete(timeoutKey)
           }
 
-          // Remove from typing users
           setTypingUsers(prev => {
             const updated = new Map(prev)
             const channelTyping = updated.get(channelId)
@@ -239,7 +185,6 @@ function App() {
     })
   }, [messages, username])
 
-  // Cleanup typing timeouts on unmount
   useEffect(() => {
     return () => {
       typingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout))
@@ -247,7 +192,6 @@ function App() {
     }
   }, [])
 
-  // Listen for CHAT_MUTE and CHAT_UNMUTE messages to track when current user is muted/unmuted
   useEffect(() => {
     messages.forEach((message, index) => {
       const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
@@ -259,15 +203,12 @@ function App() {
       if (message.type === 'chat_mute') {
         const payload = message.payload as { channel_id: number; target: string; duration?: number }
 
-        // Check if the mute is for the current user
         if (payload.target === username) {
           if (payload.duration) {
-            // Set the mute end time (current time + duration in milliseconds)
             const endTime = Date.now() + (payload.duration * 1000)
             setMuteEndTime(endTime)
             setMuteTimeRemaining(payload.duration)
           } else {
-            // Indefinite mute
             setMuteEndTime(-1)
             setMuteTimeRemaining(0)
           }
@@ -279,9 +220,7 @@ function App() {
       if (message.type === 'chat_unmute') {
         const payload = message.payload as { channel_id: number; target: string }
 
-        // Check if the unmute is for the current user
         if (payload.target === username) {
-          // Clear the mute state
           setMuteEndTime(null)
           setMuteTimeRemaining(0)
         }
@@ -291,7 +230,6 @@ function App() {
     })
   }, [messages, username])
 
-  // Countdown timer for mute duration
   useEffect(() => {
     if (!muteEndTime || muteEndTime === -1) return
 
@@ -300,39 +238,31 @@ function App() {
       setMuteTimeRemaining(timeLeft)
 
       if (timeLeft === 0) {
-        // Mute expired
         setMuteEndTime(null)
         setMuteTimeRemaining(0)
       }
-    }, 100) // Update more frequently for smooth countdown
+    }, 100)
 
     return () => clearInterval(interval)
   }, [muteEndTime])
 
-  // Filter messages for current channel
   const filteredMessages = currentChannelId !== null
     ? messages.filter((msg: Message) => {
-        // Filter CHAT_SEND messages by channel_id
         if (msg.type === 'chat_send' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
-        // Show channel join/leave messages for current channel
         if ((msg.type === 'channel_join' || msg.type === 'channel_leave') && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
-        // Show kick messages for current channel
         if (msg.type === 'chat_kick' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
-        // Show mute messages for current channel
         if (msg.type === 'chat_mute' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
-        // Show unmute messages for current channel
         if (msg.type === 'chat_unmute' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
-        // Show errors in current channel
         if (msg.type === 'error') {
           return true
         }
@@ -349,7 +279,6 @@ function App() {
       return
     }
 
-    // Check if already joined
     if (joinedChannelsRef.current.has(channelId)) {
       alert('You have already joined this channel')
       setIsJoinModalOpen(false)
@@ -357,22 +286,17 @@ function App() {
       return
     }
 
-    // Send join request (username no longer needed - server knows it)
     const channelJoinMessage = MessageBuilder.channelJoin(channelId)
     wsSendMessage(channelJoinMessage)
 
-    // Add to joined channels
     joinedChannelsRef.current.add(channelId)
 
-    // Add to channels list if not already there
     if (!channels.find(c => c.id === channelId)) {
       setChannels(prev => [...prev, { id: channelId, name: `Channel ${channelId}` }])
     }
 
-    // Set as current channel
     setCurrentChannelId(channelId)
 
-    // Close modal
     setIsJoinModalOpen(false)
     setJoinChannelId('')
   }
@@ -382,24 +306,19 @@ function App() {
   }
 
   function handleLeaveChannel(channelId: number) {
-    // Send leave message to server
     const leaveMessage = MessageBuilder.channelLeave(channelId)
     wsSendMessage(leaveMessage)
 
-    // Remove from joined channels tracking
     joinedChannelsRef.current.delete(channelId)
 
-    // Remove from channels list
     setChannels(prev => prev.filter(c => c.id !== channelId))
 
-    // Clear channel members for this channel
     setChannelMembers(prev => {
       const updated = new Map(prev)
       updated.delete(channelId)
       return updated
     })
 
-    // If this was the current channel, switch to another or null
     if (currentChannelId === channelId) {
       const remainingChannels = channels.filter(c => c.id !== channelId)
       setCurrentChannelId(remainingChannels.length > 0 ? remainingChannels[0].id : null)
@@ -409,17 +328,14 @@ function App() {
   function handleMessageChange(newMessage: string) {
     setMessage(newMessage)
 
-    // Check if this is a command (starts with "/")
     if (newMessage.startsWith('/')) {
       const parsed = parseCommand(newMessage)
       if (parsed) {
-        // Filter commands based on what's been typed
         const matches = filterCommands(parsed.command)
         setFilteredCommands(matches)
         setShowCommandAutocomplete(matches.length > 0)
         setSelectedCommandIndex(0)
       } else if (newMessage === '/') {
-        // Show all commands when just "/" is typed
         setFilteredCommands(filterCommands(''))
         setShowCommandAutocomplete(true)
         setSelectedCommandIndex(0)
@@ -427,26 +343,14 @@ function App() {
         setShowCommandAutocomplete(false)
       }
     } else {
-      // Hide autocomplete if not a command
       setShowCommandAutocomplete(false)
 
-      // Send TYPING_START if we have a channel and we're typing
       if (currentChannelId !== null && newMessage.length > 0 && isConnected) {
         const now = Date.now()
         const lastSent = lastTypingSentRef.current.get(currentChannelId) || 0
 
-        console.log('[App] handleMessageChange:', {
-          currentChannelId,
-          messageLength: newMessage.length,
-          isConnected,
-          timeSinceLastSent: now - lastSent
-        })
-
-        // Only send TYPING_START if we haven't sent one in the last 8 seconds
-        // This ensures we send it when starting to type, and re-send if still typing after 8 seconds
         if (now - lastSent > 8000) {
           const typingMessage = MessageBuilder.typingStart(currentChannelId)
-          console.log('[App] Sending TYPING_START:', typingMessage)
           wsSendMessage(typingMessage)
           lastTypingSentRef.current.set(currentChannelId, now)
         }
@@ -455,7 +359,6 @@ function App() {
   }
 
   function handleCommandSelect(command: Command) {
-    // Insert command format into input
     const commandText = `/${command.name} `
     setMessage(commandText)
     setShowCommandAutocomplete(false)
@@ -497,7 +400,6 @@ function App() {
       return
     }
 
-    // Check if this is a command
     if (message.startsWith('/')) {
       const parsed = parseCommand(message)
       if (!parsed) {
@@ -505,7 +407,6 @@ function App() {
         return
       }
 
-      // Handle different commands
       if (parsed.command === 'kick') {
         if (parsed.args.length < 1) {
           alert('Usage: /kick <target> [reason]')
@@ -522,7 +423,6 @@ function App() {
           return
         }
         const target = parsed.args[0]
-        // Check if second argument is a number (duration)
         let duration: number | undefined = undefined
         let reasonStartIndex = 1
         if (parsed.args.length > 1) {
@@ -549,27 +449,22 @@ function App() {
         alert(`Unknown command: ${parsed.command}`)
       }
     } else {
-      // Regular chat message
       const chatMessage = MessageBuilder.chatSend(currentChannelId, message)
       wsSendMessage(chatMessage)
       setMessage('')
-      // Reset typing indicator tracking when sending
       lastTypingSentRef.current.delete(currentChannelId)
     }
 
-    // Hide autocomplete after sending
     setShowCommandAutocomplete(false)
   }
 
   function handleLoginSuccess(loggedInUsername: string) {
     login(loggedInUsername)
-    // Reconnect WebSocket with new token
     reconnect()
   }
 
   function handleLogout() {
     logout()
-    // Reconnect as guest
     reconnect()
   }
 
@@ -594,7 +489,6 @@ function App() {
         }}
       />
 
-      {/* Join Channel Modal */}
       {isJoinModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
@@ -638,7 +532,6 @@ function App() {
         </div>
       )}
 
-      {/* Sidebar */}
       <Sidebar
         channels={channels}
         currentChannelId={currentChannelId}
@@ -647,9 +540,7 @@ function App() {
         onLeaveChannel={handleLeaveChannel}
       />
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">
@@ -694,7 +585,6 @@ function App() {
           </div>
         </div>
 
-        {/* Messages Display */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {currentChannelId === null ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -722,15 +612,8 @@ function App() {
           )}
         </div>
 
-        {/* Typing Indicator */}
         {currentChannelId !== null && (() => {
           const channelTyping = typingUsers.get(currentChannelId)
-          console.log('[App] Typing indicator render check:', {
-            currentChannelId,
-            channelTyping,
-            typingUsersSize: channelTyping?.size,
-            allTypingChannels: Array.from(typingUsers.keys())
-          })
 
           if (!channelTyping || channelTyping.size === 0) return null
 
@@ -747,8 +630,6 @@ function App() {
             typingText = `${typingUsernames[0]}, ${typingUsernames[1]}, and ${typingUsernames.length - 2} others are typing...`
           }
 
-          console.log('[App] Rendering typing indicator:', typingText)
-
           return (
             <div className="bg-gray-50 px-6 py-2 border-t border-gray-200">
               <div className="max-w-4xl mx-auto text-sm text-gray-500 italic">
@@ -758,10 +639,8 @@ function App() {
           )
         })()}
 
-        {/* Message Form */}
         <div className="bg-white border-t border-gray-200 p-4">
           <form onSubmit={sendMessage} className="relative flex gap-2 max-w-4xl mx-auto">
-            {/* Command Autocomplete */}
             {showCommandAutocomplete && (
               <CommandAutocomplete
                 commands={filteredCommands}
@@ -780,8 +659,8 @@ function App() {
                 placeholder={
                   muteEndTime
                     ? muteEndTime === -1
-                      ? '🔇 You are muted indefinitely'
-                      : `🔇 You are muted - ${Math.floor(muteTimeRemaining / 60)}:${(muteTimeRemaining % 60).toString().padStart(2, '0')} remaining`
+                      ? 'You are muted indefinitely'
+                      : `You are muted - ${Math.floor(muteTimeRemaining / 60)}:${(muteTimeRemaining % 60).toString().padStart(2, '0')} remaining`
                     : currentChannelId !== null
                     ? `Message #${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
                     : 'Join a channel to send messages'
@@ -806,19 +685,8 @@ function App() {
         </div>
       </div>
 
-      {/* Right Sidebar - Members List */}
       <MembersList
-        members={(() => {
-          const members = currentChannelId !== null ? (channelMembers.get(currentChannelId) || []) : []
-          console.log('[App] Passing members to MembersList:', {
-            currentChannelId,
-            memberCount: members.length,
-            members: members.map(m => m.username),
-            allChannelsInMap: Array.from(channelMembers.keys()),
-            mapSize: channelMembers.size
-          })
-          return members
-        })()}
+        members={currentChannelId !== null ? (channelMembers.get(currentChannelId) || []) : []}
         currentChannelId={currentChannelId}
       />
     </div>

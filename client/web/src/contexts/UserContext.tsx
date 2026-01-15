@@ -48,7 +48,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return stored || generateAvatarColor()
   })
 
-  // Username is now just the displayName, no #number suffix
   const username = displayName
 
   useEffect(() => {
@@ -64,7 +63,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [isGuest])
 
   const setUsername = (newDisplayName: string, newIsGuest: boolean = true) => {
-    console.log('[UserContext] setUsername called with:', newDisplayName, 'isGuest:', newIsGuest)
     setDisplayName(newDisplayName)
     setIsGuest(newIsGuest)
   }
@@ -72,14 +70,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const login = (loggedInUsername: string) => {
     setDisplayName(loggedInUsername)
     setIsAuthenticated(true)
-    setIsGuest(false) // Authenticated users are not guests
+    setIsGuest(false)
   }
 
   const logout = () => {
     tokenStorage.clearToken()
     setIsAuthenticated(false)
     setIsGuest(true)
-    // Optionally reset to guest mode
     setDisplayName('Guest')
   }
 

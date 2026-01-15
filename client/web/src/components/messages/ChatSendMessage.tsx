@@ -32,25 +32,15 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
     sendMessage(reactMsg)
   }
 
-  console.log('[ChatSendMessage]', {
-    sender,
-    currentUsername,
-    isOwnMessage,
-    payloadSender: payload.sender
-  });
-
   if (isOwnMessage) {
-    // Own message - aligned right with green styling
     return (
       <div className="flex justify-end">
         <div className="max-w-md">
           <div className="relative p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-md border-r-4 border-green-500 group">
-            {/* Message content */}
             <div className="text-gray-800 leading-relaxed mb-2">
               {payload.content}
             </div>
 
-            {/* Reactions display */}
             {messageReactions.size > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {Array.from(messageReactions.entries()).map(([emote, count]) => (
@@ -66,7 +56,6 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
               </div>
             )}
 
-            {/* Timestamp and reaction button */}
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="relative">
                 {showPicker && (
@@ -91,12 +80,10 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
     );
   }
 
-  // Other user's message - aligned left with blue styling
   return (
     <div className="flex justify-start">
       <div className="max-w-md">
         <div className="relative p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md border-l-4 border-blue-500 group">
-          {/* Message header */}
           <div className="flex items-center gap-2 mb-2">
             <div className="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full font-semibold text-sm">
               {sender[0].toUpperCase()}
@@ -111,12 +98,10 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
             </div>
           </div>
 
-          {/* Message content */}
           <div className="pl-10 text-gray-800 leading-relaxed mb-2">
             {payload.content}
           </div>
 
-          {/* Reactions display */}
           {messageReactions.size > 0 && (
             <div className="flex flex-wrap gap-1 pl-10 mb-2">
               {Array.from(messageReactions.entries()).map(([emote, count]) => (
@@ -132,7 +117,6 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
             </div>
           )}
 
-          {/* Reaction button */}
           <div className="pl-10 relative">
             {showPicker && (
               <ReactionPicker
