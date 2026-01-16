@@ -42,26 +42,6 @@ services:
     networks:
       - chat_network
 
-  # Guest cleanup
-  guest_cleanup:
-    image: postgres:16-alpine
-    container_name: guest_cleanup
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: chatuser
-      POSTGRES_PASSWORD: chatpassword
-      POSTGRES_DB: chatdb
-    volumes:
-      - ./scripts/cleanup_guests.sh:/cleanup_guests.sh:ro
-    entrypoint: ["/bin/sh", "/cleanup_guests.sh"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - chat_network
-    profiles:
-      - cleanup
-
 volumes:
   postgres_data:
 
