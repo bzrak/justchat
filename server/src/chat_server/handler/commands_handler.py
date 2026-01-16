@@ -37,7 +37,6 @@ async def handler_kick(
     Handle kick command
     """
     try:
-        # TODO: Check permission
         target = manager.channel_srvc.find_member_by_username(
             msg_in.payload.channel_id, msg_in.payload.target
         )
