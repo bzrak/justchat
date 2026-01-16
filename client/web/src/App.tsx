@@ -227,6 +227,39 @@ function App() {
 
         processedMessageIds.current.add(messageKey)
       }
+
+      if (message.type === 'chat_kick') {
+        const payload = message.payload as { channel_id: number; target: string; reason?: string }
+
+        if (payload.target === username) {
+          const channelId = payload.channel_id
+          const channelName = channels.find(c => c.id === channelId)?.name || `Channel ${channelId}`
+          const alertMessage = payload.reason
+            ? `You have been kicked from ${channelName}\nReason: ${payload.reason}`
+            : `You have been kicked from ${channelName}`
+          alert(alertMessage)
+
+          joinedChannelsRef.current.delete(channelId)
+
+          setChannels(prev => prev.filter(c => c.id !== channelId))
+
+          setChannelMembers(prev => {
+            const updated = new Map(prev)
+            updated.delete(channelId)
+            return updated
+          })
+
+          setCurrentChannelId(prev => {
+            if (prev === channelId) {
+              const remaining = Array.from(joinedChannelsRef.current)
+              return remaining.length > 0 ? remaining[0] : null
+            }
+            return prev
+          })
+        }
+
+        processedMessageIds.current.add(messageKey)
+      }
     })
   }, [messages, username])
 

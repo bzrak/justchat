@@ -77,7 +77,7 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
       console.error('WebSocket error:', error)
     }
 
-    ws.onclose = (event) => {
+    ws.onclose = () => {
       setIsConnected(false)
       setIsReady(false)
       wsRef.current = null
