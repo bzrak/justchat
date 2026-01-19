@@ -297,3 +297,51 @@ class TestDeleteUser:
         )
 
         assert response.status_code == 401
+
+
+class TestGetUserMessages:
+    """
+    Tests for GET /dashboard/users/{user_id}/messages
+    """
+
+    @pytest.mark.asyncio
+    async def test_get_messages_user_not_found(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Should return 404 when user doesn't exist
+        """
+        # Required at least 1 user in the database
+        await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+        response = await test_client.get(
+            f"{API_URL}/users/666/messages",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_messages_empty(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Should return empty list for user with no messages.
+        """
+        # Required at least 1 user in the database
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.get(
+            f"{API_URL}/users/{user.id}/messages",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert data["messages"] == []
