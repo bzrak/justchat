@@ -108,6 +108,28 @@ async def get_users_paginated(
     return count.scalar(), users.all()
 
 
+async def get_user_messages(
+    session: AsyncSession, user_id: int, offset: int = 0, limit: int = 10
+) -> tuple[int, list[MessageTable]]:
+    """
+    Retrieve messages sent by an user
+    """
+    count_stmt = select(func.count(MessageTable.id)).where(
+        MessageTable.sender_id == user_id
+    )
+    count = await session.execute(count_stmt)
+
+    messages_stmt = (
+        select(MessageTable)
+        .where(MessageTable.sender_id == user_id)
+        .offset(offset)
+        .limit(limit)
+    )
+    messages = await session.scalars(messages_stmt)
+
+    return count.scalar(), messages.all()
+
+
 async def create_message(
     session: AsyncSession, message: ChatSend
 ) -> MessageTable | None:

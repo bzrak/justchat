@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from typing import Annotated
 
@@ -38,6 +39,21 @@ class UserPublic(BaseModel):
 class UsersPublic(BaseModel):
     count: int
     users: list[UserPublic]
+
+
+class MessagePublic(BaseModel):
+    channel_id: int
+    sender_username: str
+    timestamp: datetime
+    content: str
+
+    # Allows conversion from SQLAlchemy to Pydantic Model
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MessagesPublic(BaseModel):
+    count: int
+    messages: list[MessagePublic]
 
 
 class Token(BaseModel):
