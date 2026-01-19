@@ -1,24 +1,24 @@
-from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import StaticPool
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
 from chat_server.api.models import UserCreate
 from chat_server.connection.channel import Channel
-from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.connection.user import User
+from chat_server.db.db import get_db
 from chat_server.db.models import Base
+from chat_server.main import app
 from chat_server.protocol.messages import ChatSend, ChatSendPayload, UserFrom
+from chat_server.security.utils import generate_access_token
 from chat_server.services.channel_service import ChannelService
-from chat_server.services.membership_service import MembershipService
 from chat_server.services.message_broker import MessageBroker
 from chat_server.services.moderation_service import ModerationService
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import StaticPool
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -57,7 +57,7 @@ def sample_user():
     """
     Valid sample data for a User.
     """
-    return {"username": "testuser", "password": "testuserpassword"}
+    return {"username": "testuser", "password": "Testuserpassword1"}
 
 
 @pytest.fixture
@@ -150,3 +150,31 @@ async def patched_session(test_engine):
 
     with patch("chat_server.db.db.async_session", async_session_maker):
         yield
+
+
+@pytest_asyncio.fixture
+async def test_client(test_engine):
+    """
+    HTTP client for tesing API endpoints with test database.
+    """
+    async_session_maker = async_sessionmaker(test_engine, expire_on_commit=False)
+
+    async def override_get_db():
+        async with async_session_maker() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers(test_user):
+    """
+    Returns headers with valid JWT token for authenticated requests.
+    """
+    token = generate_access_token(test_user.id, timedelta(minutes=15))
+    return {"Authorization": f"Bearer {token}"}
