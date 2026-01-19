@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import delete, select
 
 from chat_server.api.models import UserCreate, UserUpdate
+from chat_server.db.exceptions import UserNotFound, UsernameAlreadyExists
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash
@@ -136,22 +137,23 @@ async def update_user(
     """
     Update user information
 
-    Raises ValueError if username exists
+    Raises UsernameAlreadyExists
+    Raises UserNotFound
     """
 
-    user = await get_user_by_id(session, user_id)
-
-    if not user:
-        return None
-
-    if user_upd.username:
-        if await get_user_by_username(session, user_upd.username):
-            raise ValueError("Username in use")
-        user.username = user_upd.username
-    if user_upd.password:
-        user.hashed_password = get_password_hash(user_upd.password)
-
     try:
+        user = await get_user_by_id(session, user_id)
+
+        if not user:
+            raise UserNotFound("User not found")
+
+        if user_upd.username:
+            if await get_user_by_username(session, user_upd.username):
+                raise UsernameAlreadyExists("Username in use")
+            user.username = user_upd.username
+        if user_upd.password:
+            user.hashed_password = get_password_hash(user_upd.password)
+
         await session.commit()
         await session.refresh(user)
         return user

@@ -1,9 +1,12 @@
+import logging
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
+from sqlalchemy import exc
 
 from chat_server.api.deps import get_current_user
 from chat_server.api.models import MessagesPublic, UserPublic, UserUpdate, UsersPublic
 from chat_server.db import crud
+from chat_server.db.exceptions import UserNotFound, UsernameAlreadyExists
 from chat_server.deps import DBSession
 
 router = APIRouter(prefix="/users", tags=["dashboard-users"])
@@ -70,9 +73,12 @@ async def update_user(session: DBSession, user_id: int, user_in: UserUpdate):
         if not user:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
         return user
-    except ValueError:
+    except UserNotFound:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    except UsernameAlreadyExists:
         raise HTTPException(status.HTTP_409_CONFLICT, "Username in use")
-    except Exception:
+    except Exception as e:
+        logging.debug(f"Unexpected error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "An internal server error occurred. Try again.",
