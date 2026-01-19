@@ -2,6 +2,8 @@ name: Push-to-EC2
 
 on:
   push:
+    branches:
+      - master
     paths:
       - 'server/**'
   workflow_dispatch:
