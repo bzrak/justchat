@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 
-from chat_server.api.models import UserCreate
+from chat_server.api.models import UserCreate, UserUpdate
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash
@@ -128,6 +128,40 @@ async def get_user_messages(
     messages = await session.scalars(messages_stmt)
 
     return count.scalar(), messages.all()  # type: ignore
+
+
+async def update_user(
+    session: AsyncSession, user_id: int, user_upd: UserUpdate
+) -> UserTable | None:
+    """
+    Update user information
+
+    Raises ValueError if username exists
+    """
+
+    user = await get_user_by_id(session, user_id)
+
+    if not user:
+        return None
+
+    if user_upd.username:
+        if await get_user_by_username(session, user_upd.username):
+            raise ValueError("Username in use")
+        user.username = user_upd.username
+    if user_upd.password:
+        user.hashed_password = get_password_hash(user_upd.password)
+
+    try:
+        await session.commit()
+        await session.refresh(user)
+        return user
+    except Exception as e:
+        logging.error(
+            f"An unexpected error occured while updating user {user_id}: {e}",
+            exc_info=True,
+        )
+        await session.rollback()
+        raise e
 
 
 async def create_message(

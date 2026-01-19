@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
 
 from chat_server.api.deps import get_current_user
-from chat_server.api.models import MessagesPublic, UserPublic, UsersPublic
+from chat_server.api.models import MessagesPublic, UserPublic, UserUpdate, UsersPublic
 from chat_server.db import crud
 from chat_server.deps import DBSession
 
@@ -54,3 +54,23 @@ async def get_user_messages(
     count, messages = await crud.get_user_messages(session, user_id, offset, limit)
 
     return MessagesPublic(count=count, messages=messages)  # type: ignore
+
+
+@router.patch(
+    "/{user_id}",
+    response_model=UserPublic,
+    dependencies=[Depends(get_current_user)],
+)
+async def update_user(session: DBSession, user_id: int, user_in: UserUpdate):
+    try:
+        user = await crud.update_user(session, user_id, user_in)
+        if not user:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        return user
+    except ValueError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username in use")
+    except Exception:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "An internal server error occurred. Try again.",
+        )
