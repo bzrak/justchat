@@ -28,8 +28,8 @@ class TestListUsers:
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 2
-        assert data["users"][0].get("username") == "user1"
-        assert data["users"][1].get("username") == "user2"
+        assert data["users"][0]["username"] == "user1"
+        assert data["users"][1]["username"] == "user2"
 
     @pytest.mark.asyncio
     async def test_list_users_pagination(
@@ -51,7 +51,7 @@ class TestListUsers:
         data = response.json()
         assert data["count"] == 6
         assert len(data["users"]) == 2
-        assert data["users"][0].get("username") == "user2"
+        assert data["users"][0]["username"] == "user2"
 
     @pytest.mark.asyncio
     async def test_list_users_unauthorized(self, test_client: AsyncClient):
@@ -61,3 +61,48 @@ class TestListUsers:
         response = await test_client.get(f"{API_URL}/users/")
 
         assert response.status_code == 401
+
+
+class TestGetUser:
+    """
+    Tests for GET /dashboard/users/{user_id}
+    """
+
+    @pytest.mark.asyncio
+    async def test_get_user_success(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Get user details
+        """
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.get(
+            f"{API_URL}/users/{user.id}", headers=auth_headers
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == user.id
+        assert data["username"] == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_get_user_not_found(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        404 is returned for non-existent user.
+        """
+
+        # The database can't be empty otherwise the auth_headers won't work
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        response = await test_client.get(f"{API_URL}/users/99999", headers=auth_headers)
+
+        assert response.status_code == 404
