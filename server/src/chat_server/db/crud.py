@@ -92,6 +92,22 @@ async def get_user_by_id(session: AsyncSession, id: int) -> UserTable | None:
     return await session.get(UserTable, id)
 
 
+async def get_users_paginated(
+    session: AsyncSession, offset: int = 0, limit: int = 10
+) -> tuple[int, list[UserTable]]:
+    """
+    Retrive a paginated list of users
+    """
+
+    count_stmt = select(func.count(UserTable.id))
+    count = await session.execute(count_stmt)
+
+    users_stmt = select(UserTable).limit(limit).offset(offset)
+    users = await session.scalars(users_stmt)
+
+    return count.scalar(), users.all()
+
+
 async def create_message(
     session: AsyncSession, message: ChatSend
 ) -> MessageTable | None:

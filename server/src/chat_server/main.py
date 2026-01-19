@@ -4,11 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
 
 from chat_server.api import auth
+from chat_server.api.dashboard.routes import dashboard_router
 from chat_server.connection.manager import ConnectionManager
 from chat_server.db.db import init_db
 from chat_server.infrastructure.channel_manager import ChannelManager
 from chat_server.infrastructure.connection_registry import ConnectionRegistry
-from chat_server.security.utils import get_password_hash
 from chat_server.services.authorization_service import AuthenticationService
 from chat_server.services.channel_service import ChannelService
 from chat_server.services.membership_service import MembershipService
@@ -37,6 +37,7 @@ settings = get_settings()
 # API Routes
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 api_router.include_router(auth.router)
+api_router.include_router(dashboard_router)
 
 
 @asynccontextmanager

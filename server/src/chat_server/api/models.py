@@ -2,6 +2,7 @@ import re
 from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
+from pydantic.config import ConfigDict
 from pydantic.types import StringConstraints
 
 from chat_server.db.models import USERNAME_MAX_LENGTH
@@ -29,6 +30,14 @@ class UserPublic(BaseModel):
     id: int
     username: str
     is_guest: bool
+
+    # Allows conversion from SQLAlchemy to Pydantic Model
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UsersPublic(BaseModel):
+    count: int
+    users: list[UserPublic]
 
 
 class Token(BaseModel):
