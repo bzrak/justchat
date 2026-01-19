@@ -62,6 +62,9 @@ async def get_user_messages(
     dependencies=[Depends(get_current_user)],
 )
 async def update_user(session: DBSession, user_id: int, user_in: UserUpdate):
+    """
+    Update user details
+    """
     try:
         user = await crud.update_user(session, user_id, user_in)
         if not user:
@@ -74,3 +77,15 @@ async def update_user(session: DBSession, user_id: int, user_in: UserUpdate):
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "An internal server error occurred. Try again.",
         )
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_current_user)],
+)
+async def delete_user(session: DBSession, user_id: int):
+    """
+    Delete user
+    """
+    await crud.delete_user_by_id(session, user_id)

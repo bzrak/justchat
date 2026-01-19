@@ -4,7 +4,7 @@ from datetime import timedelta
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import select
+from sqlalchemy.sql import delete, select
 
 from chat_server.api.models import UserCreate, UserUpdate
 from chat_server.db.models import MessageTable, MuteTable, UserTable
@@ -162,6 +162,16 @@ async def update_user(
         )
         await session.rollback()
         raise e
+
+
+async def delete_user_by_id(session: AsyncSession, user_id: int):
+    """
+    Delete user using their ID
+    """
+    stmt = delete(UserTable).where(UserTable.id == user_id)
+    await session.execute(stmt)
+    logging.info(f"Deleted {user_id} from database.")
+    await session.commit()
 
 
 async def create_message(
