@@ -1,4 +1,5 @@
 import logging
+import math
 from datetime import timedelta
 
 from sqlalchemy import func
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import query
 from sqlalchemy.sql import delete, select
 
-from chat_server.api.models import UserCreate, UserUpdate
+from chat_server.api.models import UserCreate, UserUpdate, UsersPublic
 from chat_server.db.exceptions import UserNotFound, UsernameAlreadyExists
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
@@ -96,18 +97,18 @@ async def get_user_by_id(session: AsyncSession, id: int) -> UserTable | None:
     return await session.get(UserTable, id)
 
 
+# TODO: Is this return the best approach ?
 async def get_users_paginated(
     session: AsyncSession,
     page: int = 1,
     limit: int = 10,
     registered_only: bool = False,
-) -> tuple[int, int, int, int, list[UserTable]]:
+) -> UsersPublic:
     """
     Retrive a paginated list of users
     """
 
     count_stmt = select(func.count()).select_from(UserTable)
-    total_users = await session.scalar(count_stmt)
 
     offset = (page - 1) * limit
     users_stmt = (
@@ -115,10 +116,17 @@ async def get_users_paginated(
     )
     if registered_only:
         users_stmt = users_stmt.where(UserTable.is_guest.is_(False))
-    users = await session.scalars(users_stmt)
+        count_stmt = count_stmt.where(UserTable.is_guest.is_(False))
 
-    # Total Users, Current Page, Page Size, Total Pages, Users
-    return total_users, page, limit, -(-total_users // limit), users.all()  # type: ignore
+    users = await session.scalars(users_stmt)
+    users = users.all()
+    total_users = await session.scalar(count_stmt) or 0
+
+    return UsersPublic(
+        total_users=total_users,
+        total_pages=math.ceil(total_users / limit),
+        users=users,  # type: ignore
+    )
 
 
 async def get_user_messages(

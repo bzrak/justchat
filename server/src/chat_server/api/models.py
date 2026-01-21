@@ -61,8 +61,6 @@ class UserPublic(BaseModel):
 
 class UsersPublic(BaseModel):
     total_users: int
-    page: int
-    page_size: int
     total_pages: int
     users: list[UserPublic]
 
