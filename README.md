@@ -120,6 +120,21 @@ be based of `BaseModel` to ensure validation by Pydantic.
 
 ## Architecture Design
 
+```mermaid
+flowchart TD
+    K["/ws endpoint"] --> A
+    A[ConnectionManager]
+    A -->|Manage WebSocket Connections| B["Connection Registry"]
+    A -->|Authorize User and Create Guests| C["Auth Srvc"]
+    A -->|"Send messages to channel, users, websockets"| D["Message Broker"]
+    A -->|"Manage users in channels"| E["Channel Srvc"]
+    A -->|"Manage moderation commands"| F["Moderation Srvc"]
+    E -->|Low-Level API to manage user/channel relations| G["Membership Srvc"]
+    E -->|Low-Level API to manage channel| H["Channel Manager"]
+    M["/api/dashboard/* endpoint"] -->
+    J[Dashboard Service] --> E
+```
+
 - Top-Level Object is the `ConnectionManager` that will accept a WebSocket
 connection and then process every data received.
   - Ensure the first message ("hello") by the user is correct.
