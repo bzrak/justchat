@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     PORT: int = 8000
     ENVIRONMENT: str
 
+    # CORS Origin allowed
+    ORIGINS: str
+
     # Security
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
 

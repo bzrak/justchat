@@ -28,6 +28,9 @@ services:
       SUPERUSER_USERNAME: "admin"
       SUPERUSER_PASSWORD: "admin"
 
+      # Set allowed CORS origins
+      ORIGINS: "changethis"
+
       POSTGRES_USER: chatuser
       POSTGRES_PASSWORD: chatpassword
       POSTGRES_HOST: 0.0.0.0
