@@ -103,20 +103,24 @@ async def get_users_paginated(
     page: int = 1,
     limit: int = 10,
     registered_only: bool = False,
+    search: str | None = None,
 ) -> UsersPublic:
     """
     Retrive a paginated list of users
     """
 
-    count_stmt = select(func.count()).select_from(UserTable)
-
     offset = (page - 1) * limit
     users_stmt = (
         select(UserTable).order_by(UserTable.username).limit(limit).offset(offset)
     )
+    count_stmt = select(func.count()).select_from(UserTable)
+
     if registered_only:
         users_stmt = users_stmt.where(UserTable.is_guest.is_(False))
         count_stmt = count_stmt.where(UserTable.is_guest.is_(False))
+    if search:
+        users_stmt = users_stmt.where(UserTable.username.ilike(f"%{search}%"))
+        count_stmt = count_stmt.where(UserTable.username.ilike(f"%{search}%"))
 
     users = await session.scalars(users_stmt)
     users = users.all()

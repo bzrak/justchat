@@ -17,11 +17,14 @@ async def list_users(
     page: int = 1,
     page_size: int = 10,
     registered_only: bool = False,
+    search: str | None = None,
 ):
     """
     Get a list of users
     """
-    return await crud.get_users_paginated(session, page, page_size, registered_only)
+    return await crud.get_users_paginated(
+        session, page, page_size, registered_only, search
+    )
 
 
 @router.get(

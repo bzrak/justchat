@@ -36,13 +36,16 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const dashboardService = {
-  async getUsers(page: number = 1, pageSize: number = 10, registeredOnly: boolean = false): Promise<UsersPublic> {
+  async getUsers(page: number = 1, pageSize: number = 10, registeredOnly: boolean = false, search?: string): Promise<UsersPublic> {
     const params = new URLSearchParams({
       page: page.toString(),
       page_size: pageSize.toString(),
     })
     if (registeredOnly) {
       params.append('registered_only', 'true')
+    }
+    if (search) {
+      params.append('search', search)
     }
     const response = await fetch(
       `${API_BASE_URL}/api/v1/dashboard/users/?${params.toString()}`,
