@@ -118,7 +118,7 @@ async def get_users_paginated(
     users = await session.scalars(users_stmt)
 
     # Total Users, Current Page, Page Size, Total Pages, Users
-    return total_users, page, limit, (total_users // limit), users.all()  # type: ignore
+    return total_users, page, limit, -(-total_users // limit), users.all()  # type: ignore
 
 
 async def get_user_messages(
