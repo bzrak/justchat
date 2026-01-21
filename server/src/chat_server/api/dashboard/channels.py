@@ -16,7 +16,11 @@ def active_channels(dashboard_srvc: DashbordSrvc) -> ChannelsStats:
     return ChannelsStats(count=len(ch), channels=ch)  # type: ignore
 
 
-@router.get("/members/{ch_id}", response_model=ChannelMembers)
+@router.get(
+    "/members/{ch_id}",
+    response_model=ChannelMembers,
+    dependencies=[Depends(get_current_user)],
+)
 def get_channel_members(dashboard_srvc: DashbordSrvc, ch_id: int):
     try:
         members = dashboard_srvc.get_channel_members(ch_id)
