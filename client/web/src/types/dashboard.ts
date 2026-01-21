@@ -2,10 +2,14 @@ export interface UserPublic {
   id: number
   username: string
   is_guest: boolean
+  created_at: string
 }
 
 export interface UsersPublic {
-  count: number
+  total_users: number
+  page: number
+  page_size: number
+  total_pages: number
   users: UserPublic[]
 }
 

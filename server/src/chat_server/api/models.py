@@ -60,7 +60,10 @@ class UserPublic(BaseModel):
 
 
 class UsersPublic(BaseModel):
-    count: int
+    total_users: int
+    page: int
+    page_size: int
+    total_pages: int
     users: list[UserPublic]
 
 

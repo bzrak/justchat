@@ -105,7 +105,8 @@ function generateAvatarColor(username: string): string {
 export function Dashboard() {
   const [users, setUsers] = useState<UserPublic[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
-  const [currentPage, setCurrentPage] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [registeredOnly, setRegisteredOnly] = useState(false)
@@ -136,9 +137,10 @@ export function Dashboard() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await dashboardService.getUsers(currentPage * USERS_PER_PAGE, USERS_PER_PAGE, registeredOnly)
+      const response = await dashboardService.getUsers(currentPage, USERS_PER_PAGE, registeredOnly)
       setUsers(response.users)
-      setTotalUsers(response.count)
+      setTotalUsers(response.total_users)
+      setTotalPages(response.total_pages)
 
       // Calculate stats from current page (ideally this would come from a stats endpoint)
       const registered = response.users.filter(u => !u.is_guest).length
@@ -266,7 +268,6 @@ export function Dashboard() {
     }
   }
 
-  const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE)
   const totalMessagesPages = Math.ceil(totalMessages / MESSAGES_PER_PAGE)
 
   return (
@@ -384,7 +385,7 @@ export function Dashboard() {
                   <span className="text-sm text-slate-400">Registered only</span>
                   <button
                     onClick={() => {
-                      setCurrentPage(0)
+                      setCurrentPage(1)
                       setRegisteredOnly(!registeredOnly)
                     }}
                     className={`relative w-11 h-6 rounded-full transition-colors ${
@@ -422,6 +423,9 @@ export function Dashboard() {
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                           Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          Joined
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                           ID
@@ -468,6 +472,11 @@ export function Dashboard() {
                               )}
                             </td>
                             <td className="px-6 py-4">
+                              <span className="text-slate-400 text-sm">
+                                {new Date(user.created_at).toLocaleDateString()}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
                               <span className="text-slate-400 font-mono text-sm">#{user.id}</span>
                             </td>
                             <td className="px-6 py-4">
@@ -492,7 +501,7 @@ export function Dashboard() {
                           {/* Expanded Messages Row */}
                           {expandedUserId === user.id && (
                             <tr key={`${user.id}-messages`}>
-                              <td colSpan={4} className="px-6 py-4 bg-slate-900/50">
+                              <td colSpan={5} className="px-6 py-4 bg-slate-900/50">
                                 <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
                                   <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
                                     <ChatIcon className="w-5 h-5 text-purple-400" />
@@ -571,19 +580,19 @@ export function Dashboard() {
                   <div className="px-6 py-4 border-t border-slate-700 flex justify-between items-center">
                     <button
                       onClick={() => setCurrentPage(p => p - 1)}
-                      disabled={currentPage === 0}
+                      disabled={currentPage === 1}
                       className="px-5 py-2.5 bg-slate-700 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 transition-colors font-medium"
                     >
                       Previous
                     </button>
                     <div className="flex items-center gap-2">
                       {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                        let pageNum = i
+                        let pageNum = i + 1
                         if (totalPages > 5) {
-                          if (currentPage < 3) {
-                            pageNum = i
-                          } else if (currentPage > totalPages - 4) {
-                            pageNum = totalPages - 5 + i
+                          if (currentPage <= 3) {
+                            pageNum = i + 1
+                          } else if (currentPage > totalPages - 3) {
+                            pageNum = totalPages - 4 + i
                           } else {
                             pageNum = currentPage - 2 + i
                           }
@@ -598,14 +607,14 @@ export function Dashboard() {
                                 : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                             }`}
                           >
-                            {pageNum + 1}
+                            {pageNum}
                           </button>
                         )
                       })}
                     </div>
                     <button
                       onClick={() => setCurrentPage(p => p + 1)}
-                      disabled={currentPage >= totalPages - 1}
+                      disabled={currentPage >= totalPages}
                       className="px-5 py-2.5 bg-slate-700 text-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 transition-colors font-medium"
                     >
                       Next

@@ -22,7 +22,7 @@ async def signup(session: DBSession, user_in: UserCreate) -> UserPublic:
     """
     user = await crud.create_user(session, user_in)
     if user:
-        return UserPublic(id=user.id, username=user.username, is_guest=user.is_guest)
+        return UserPublic.model_validate(user)
     raise HTTPException(status.HTTP_409_CONFLICT, "Username already exists.")
 
 

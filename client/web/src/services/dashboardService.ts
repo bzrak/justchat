@@ -36,10 +36,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const dashboardService = {
-  async getUsers(offset: number = 0, limit: number = 10, registeredOnly: boolean = false): Promise<UsersPublic> {
+  async getUsers(page: number = 1, pageSize: number = 10, registeredOnly: boolean = false): Promise<UsersPublic> {
     const params = new URLSearchParams({
-      offset: offset.toString(),
-      limit: limit.toString(),
+      page: page.toString(),
+      page_size: pageSize.toString(),
     })
     if (registeredOnly) {
       params.append('registered_only', 'true')

@@ -98,23 +98,27 @@ async def get_user_by_id(session: AsyncSession, id: int) -> UserTable | None:
 
 async def get_users_paginated(
     session: AsyncSession,
-    offset: int = 0,
+    page: int = 1,
     limit: int = 10,
     registered_only: bool = False,
-) -> tuple[int, list[UserTable]]:
+) -> tuple[int, int, int, int, list[UserTable]]:
     """
     Retrive a paginated list of users
     """
 
-    count_stmt = select(func.count(UserTable.id))
-    count = await session.execute(count_stmt)
+    count_stmt = select(func.count()).select_from(UserTable)
+    total_users = await session.scalar(count_stmt)
 
-    users_stmt = select(UserTable).limit(limit).offset(offset)
+    offset = (page - 1) * limit
+    users_stmt = (
+        select(UserTable).order_by(UserTable.username).limit(limit).offset(offset)
+    )
     if registered_only:
         users_stmt = users_stmt.where(UserTable.is_guest.is_(False))
     users = await session.scalars(users_stmt)
 
-    return count.scalar(), users.all()  # type: ignore
+    # Total Users, Current Page, Page Size, Total Pages, Users
+    return total_users, page, limit, (total_users // limit), users.all()  # type: ignore
 
 
 async def get_user_messages(
