@@ -53,6 +53,7 @@ class UserPublic(BaseModel):
     id: int
     username: str
     is_guest: bool
+    created_at: datetime
 
     # Allows conversion from SQLAlchemy to Pydantic Model
     model_config = ConfigDict(from_attributes=True)
