@@ -1,7 +1,6 @@
 import logging
 from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
-from sqlalchemy import exc
 
 from chat_server.api.deps import get_current_user
 from chat_server.api.models import MessagesPublic, UserPublic, UserUpdate, UsersPublic
