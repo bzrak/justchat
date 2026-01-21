@@ -9,7 +9,7 @@ from sqlalchemy.orm import query
 from sqlalchemy.sql import delete, select
 
 from chat_server.api.models import UserCreate, UserUpdate, UsersPublic
-from chat_server.db.exceptions import UserNotFound, UsernameAlreadyExists
+from chat_server.exceptions import UserNotFound, UsernameAlreadyExists
 from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash

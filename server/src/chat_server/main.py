@@ -11,6 +11,7 @@ from chat_server.infrastructure.channel_manager import ChannelManager
 from chat_server.infrastructure.connection_registry import ConnectionRegistry
 from chat_server.services.authorization_service import AuthenticationService
 from chat_server.services.channel_service import ChannelService
+from chat_server.services.dashboard_service import DashboardService
 from chat_server.services.membership_service import MembershipService
 from chat_server.services.message_broker import MessageBroker
 from chat_server.services.moderation_service import ModerationService
@@ -89,6 +90,10 @@ membership_service = MembershipService()
 message_broker = MessageBroker(connection_registry)
 channel_service = ChannelService(channel_manager, membership_service, message_broker)
 moderation_service = ModerationService()
+dashboard_service = DashboardService(channel_service)
+
+# Store dashboard_serivce in app.state for access in endpoints
+app.state.dashboard_service = dashboard_service
 
 manager = ConnectionManager(
     connection_registry,

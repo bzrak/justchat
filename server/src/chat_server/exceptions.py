@@ -4,3 +4,7 @@ class UsernameAlreadyExists(Exception):
 
 class UserNotFound(Exception):
     pass
+
+
+class ChannelDoesntExist(Exception):
+    pass

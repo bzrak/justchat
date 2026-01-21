@@ -5,7 +5,7 @@ from fastapi.routing import APIRouter
 from chat_server.api.deps import get_current_user
 from chat_server.api.models import MessagesPublic, UserPublic, UserUpdate, UsersPublic
 from chat_server.db import crud
-from chat_server.db.exceptions import UserNotFound, UsernameAlreadyExists
+from chat_server.exceptions import UserNotFound, UsernameAlreadyExists
 from chat_server.deps import DBSession
 
 router = APIRouter(prefix="/users", tags=["dashboard-users"])

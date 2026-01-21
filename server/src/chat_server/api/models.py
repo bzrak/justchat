@@ -87,3 +87,28 @@ class Token(BaseModel):
 
 class TokenContent(BaseModel):
     sub: str | None = None
+
+
+class Channel(BaseModel):
+    id: int
+
+    # Allows conversion from SQLAlchemy to Pydantic Model
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChannelsStats(BaseModel):
+    count: int
+    channels: list[Channel]
+
+
+class ChannelMember(BaseModel):
+    id: int
+    username: str
+    is_guest: bool
+    # Allows conversion from SQLAlchemy to Pydantic Model
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChannelMembers(BaseModel):
+    count: int
+    users: list[ChannelMember]

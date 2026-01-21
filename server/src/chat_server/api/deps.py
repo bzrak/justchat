@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from chat_server.api.models import TokenContent
@@ -9,6 +9,7 @@ from chat_server.db import crud
 from chat_server.db.models import UserTable
 from chat_server.deps import DBSession
 from chat_server.security.utils import ALGORITHM
+from chat_server.services.dashboard_service import DashboardService
 from chat_server.settings import get_settings
 
 settings = get_settings()
@@ -35,4 +36,9 @@ async def get_current_user(session: DBSession, token: TokenDeps) -> UserTable:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
 
 
+def get_dashboard_service(request: Request) -> DashboardService:
+    return request.app.state.dashboard_service
+
+
 CurrentUser = Annotated[UserTable, Depends(get_current_user)]
+DashbordSrvc = Annotated[DashboardService, Depends(get_dashboard_service)]

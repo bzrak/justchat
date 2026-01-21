@@ -58,6 +58,12 @@ class MembershipService:
         """
         return self._user_channels.get(user, set()).copy()
 
+    def get_channels_in_use(self) -> list[Channel]:
+        """
+        Returns a list with all the Channels in use (at least 1 user online)
+        """
+        return [ch for ch, users in self._channel_members.items() if users]
+
     def is_member(self, user: User, channel: Channel) -> bool:
         """
         Check if User is member of a Channel.

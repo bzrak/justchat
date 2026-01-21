@@ -94,6 +94,12 @@ class ChannelService:
         """
         return self._channelmanager.get(channel_id)
 
+    def get_channels_in_use(self) -> list[Channel]:
+        """
+        Get all Channels with at least 1 User online.
+        """
+        return self._membershipsrvc.get_channels_in_use()
+
     def find_member_by_username(self, channel_id: int, username: str) -> User | None:
         """
         Find an User from a channel.
