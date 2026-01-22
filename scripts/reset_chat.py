@@ -156,8 +156,8 @@ def create_messages(users: dict[int, str]):
 
 def main():
     checkdb()
-    delete_users()
     delete_messages()
+    delete_users()
     users = create_users()
     create_messages(users)
 
