@@ -24,7 +24,8 @@
 
 You can access the demo here: [chat.awp1.xyz](https://chat.awp1.xyz)
 
-[![Demo](https://raw.githubusercontent.com/berzrk666/justchat/master/.assets/thumbnail.jpg)](https://raw.githubusercontent.com/berzrk666/justchat/master/.assets/chat_demo.mp4)
+![Demo](https://youtu.be/whSQsNzMNC8)
+
 
 ## Deployment
 
