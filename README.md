@@ -24,7 +24,7 @@
 
 You can access the demo here: [chat.awp1.xyz](https://chat.awp1.xyz)
 
-![Demo](https://youtu.be/whSQsNzMNC8)
+[![Demo Video](https://img.youtube.com/vi/whSQsNzMNC8/0.jpg)](https://www.youtube.com/watch?v=whSQsNzMNC8)
 
 
 ## Deployment
